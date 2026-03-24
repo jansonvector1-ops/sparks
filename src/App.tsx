@@ -4,7 +4,7 @@ import { models } from './lib/models';
 import { ChatMessage } from './components/ChatMessage';
 import { ModelSelector } from './components/ModelSelector';
 import { ChatInput } from './components/ChatInput';
-import { MessageSquare, Plus, Moon, Sun, Trash2, Download, CreditCard as Edit2, Zap, Sparkles as SparklesIcon } from 'lucide-react';
+import { MessageSquare, Plus, Moon, Sun, Trash2, Download, CreditCard as Edit2, Zap, Settings, Code2, Wand2, PenTool, Lightbulb, LogOut, Menu, X, Bot } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -30,6 +30,7 @@ function App() {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showPresets, setShowPresets] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const presets = [
@@ -271,8 +272,8 @@ function App() {
   };
 
   return (
-    <div className={`flex h-screen ${darkMode ? 'bg-gray-950' : 'bg-gray-100'}`}>
-      <div className={`w-64 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-900'} text-white flex flex-col border-r`}>
+    <div className={`flex h-screen ${darkMode ? 'bg-gray-950' : 'bg-white'}`}>
+      <div className={`${showSidebar ? 'w-60' : 'w-0'} ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-900'} text-white flex flex-col border-r transition-all duration-300 overflow-hidden`}>
         <div className="p-3 space-y-3 border-b border-gray-800">
           <button
             onClick={startNewConversation}
@@ -370,97 +371,82 @@ function App() {
       </div>
 
       <div className="flex-1 flex flex-col">
-        <div className={`border-b ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
-          <div className="max-w-4xl mx-auto px-4 py-3 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <ModelSelector
-                  selectedModel={selectedModel}
-                  onModelChange={setSelectedModel}
-                />
-              </div>
-              <div className="relative">
-                <button
-                  onClick={() => setShowPresets(!showPresets)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    darkMode
-                      ? 'hover:bg-gray-800'
-                      : 'hover:bg-gray-200'
-                  }`}
-                  title="Quick presets"
-                >
-                  <Zap size={18} className="text-amber-500" />
-                </button>
-                {showPresets && (
-                  <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50 border ${
-                    darkMode
-                      ? 'bg-gray-800 border-gray-700'
-                      : 'bg-white border-gray-200'
-                  }`}>
-                    <div className="p-2 max-h-96 overflow-y-auto space-y-1">
-                      {presets.map((preset) => (
-                        <button
-                          key={preset.model}
-                          onClick={() => {
-                            setSelectedModel(preset.model);
-                            setShowPresets(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                            selectedModel === preset.model
-                              ? darkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
-                              : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                          }`}
-                        >
-                          <div className="font-medium">{preset.name}</div>
-                          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {preset.model.split('/')[1].split(':')[0]}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              {messages.length > 0 && (
-                <button
-                  onClick={exportChat}
-                  className={`p-2 rounded-lg transition-colors ${
-                    darkMode
-                      ? 'hover:bg-gray-800'
-                      : 'hover:bg-gray-200'
-                  }`}
-                  title="Export chat"
-                >
-                  <Download size={18} />
-                </button>
-              )}
-            </div>
-            <div>
-              <label className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                System Prompt (optional)
-              </label>
-              <textarea
-                value={systemPrompt}
-                onChange={(e) => setSystemPrompt(e.target.value)}
-                placeholder="Add system instructions for the AI..."
-                className={`w-full mt-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  darkMode
-                    ? 'bg-gray-800 border-gray-700 text-white'
-                    : 'bg-white border-gray-300 text-black'
-                }`}
-                rows={2}
-              />
-            </div>
+        <div className={`border-b ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+          <div className="px-6 py-4 flex items-center justify-between">
+            <button
+              onClick={() => setShowSidebar(!showSidebar)}
+              className={`p-2 rounded-lg transition-colors ${
+                darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+              }`}
+            >
+              {showSidebar ? <Menu size={20} /> : <Menu size={20} />}
+            </button>
+            <div className="flex-1" />
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-lg transition-colors ${
+                darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+              }`}
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
           </div>
         </div>
 
         <div className={`flex-1 overflow-y-auto ${darkMode ? 'bg-gray-950' : 'bg-white'}`}>
           {messages.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <MessageSquare size={48} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium">Start a conversation</p>
-                <p className="text-sm mt-2">Choose a model and send a message to begin</p>
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center max-w-2xl px-4">
+                <div className="mb-8">
+                  <div className={`text-5xl mb-4 ${darkMode ? 'text-orange-500' : 'text-orange-600'}`}>✨</div>
+                  <h1 className={`text-4xl font-light mb-3 ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Good <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>evening</span>
+                  </h1>
+                  <div className="flex items-center justify-center gap-2 mb-8">
+                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Free plan</span>
+                    <span className={darkMode ? 'text-gray-600' : 'text-gray-300'}>•</span>
+                    <button className={`text-sm font-medium ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors`}>
+                      Upgrade
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
+                  }`}>
+                    <Code2 size={20} className={darkMode ? 'text-gray-400 group-hover:text-blue-400' : 'text-gray-600 group-hover:text-blue-600'} />
+                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Code</span>
+                  </button>
+                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
+                  }`}>
+                    <Wand2 size={20} className={darkMode ? 'text-gray-400 group-hover:text-purple-400' : 'text-gray-600 group-hover:text-purple-600'} />
+                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Create</span>
+                  </button>
+                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
+                  }`}>
+                    <PenTool size={20} className={darkMode ? 'text-gray-400 group-hover:text-cyan-400' : 'text-gray-600 group-hover:text-cyan-600'} />
+                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Write</span>
+                  </button>
+                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
+                  }`}>
+                    <Lightbulb size={20} className={darkMode ? 'text-gray-400 group-hover:text-yellow-400' : 'text-gray-600 group-hover:text-yellow-600'} />
+                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Learn</span>
+                  </button>
+                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
+                  }`}>
+                    <Zap size={20} className={darkMode ? 'text-gray-400 group-hover:text-orange-400' : 'text-gray-600 group-hover:text-orange-600'} />
+                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Presets</span>
+                  </button>
+                </div>
+
+                <div className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                  Select a model and start chatting, or try one of the quick actions above
+                </div>
               </div>
             </div>
           ) : (
@@ -492,8 +478,67 @@ function App() {
           )}
         </div>
 
-        <div className={`border-t ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
-          <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} darkMode={darkMode} />
+        <div className={`border-t ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-6`}>
+          <div className="max-w-4xl mx-auto space-y-4">
+            {messages.length === 0 && (
+              <div className="mb-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowPresets(!showPresets)}
+                      className={`p-2.5 rounded-lg border transition-all ${
+                        darkMode
+                          ? 'border-gray-700 hover:bg-gray-800'
+                          : 'border-gray-300 hover:bg-gray-50'
+                      }`}
+                      title="Quick presets"
+                    >
+                      <Zap size={18} className="text-amber-500" />
+                    </button>
+                    {showPresets && (
+                      <div className={`absolute left-0 bottom-12 w-64 rounded-lg shadow-xl z-50 border ${
+                        darkMode
+                          ? 'bg-gray-800 border-gray-700'
+                          : 'bg-white border-gray-200'
+                      }`}>
+                        <div className="p-2 space-y-1">
+                          {presets.map((preset) => (
+                            <button
+                              key={preset.model}
+                              onClick={() => {
+                                setSelectedModel(preset.model);
+                                setShowPresets(false);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 rounded-lg text-sm transition-colors flex items-start gap-3 ${
+                                selectedModel === preset.model
+                                  ? darkMode ? 'bg-blue-600/20 text-blue-400 border border-blue-600' : 'bg-blue-50 text-blue-600 border border-blue-200'
+                                  : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <Zap size={14} className="mt-0.5 flex-shrink-0" />
+                              <div>
+                                <div className="font-medium">{preset.name}</div>
+                                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  {preset.model.split('/')[1].split(':')[0]}
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <ModelSelector
+                      selectedModel={selectedModel}
+                      onModelChange={setSelectedModel}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} darkMode={darkMode} />
+          </div>
         </div>
       </div>
     </div>
