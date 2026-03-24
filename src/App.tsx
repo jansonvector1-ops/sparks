@@ -4,7 +4,7 @@ import { models } from './lib/models';
 import { ChatMessage } from './components/ChatMessage';
 import { ModelSelector } from './components/ModelSelector';
 import { ChatInput } from './components/ChatInput';
-import { MessageSquare, Plus, Moon, Sun, Trash2, Download, CreditCard as Edit2, X } from 'lucide-react';
+import { MessageSquare, Plus, Moon, Sun, Trash2, Download, CreditCard as Edit2, Zap, Sparkles as SparklesIcon } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -29,7 +29,19 @@ function App() {
   const [renameText, setRenameText] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showPresets, setShowPresets] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const presets = [
+    { name: 'Ultra-fast response', model: 'stepfun/step-3.5-flash:free' },
+    { name: 'Best quality', model: 'nousresearch/hermes-3-llama-3.1-405b:free' },
+    { name: 'Balanced (Speed+Quality)', model: 'qwen/qwen3-next-80b-a3b-instruct:free' },
+    { name: 'Code generation', model: 'nvidia/nemotron-3-super-120b-a12b:free' },
+    { name: 'Mobile/lightweight', model: 'meta-llama/llama-3.2-3b-instruct:free' },
+    { name: 'Image analysis', model: 'nvidia/nemotron-nano-12b-v2-vl:free' },
+    { name: 'Creative writing', model: 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
+    { name: 'Structured output', model: 'google/gemma-3-27b-it:free' },
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -360,15 +372,63 @@ function App() {
       <div className="flex-1 flex flex-col">
         <div className={`border-b ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
           <div className="max-w-4xl mx-auto px-4 py-3 space-y-3">
-            <div className="flex items-center gap-3">
-              <ModelSelector
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-              />
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <ModelSelector
+                  selectedModel={selectedModel}
+                  onModelChange={setSelectedModel}
+                />
+              </div>
+              <div className="relative">
+                <button
+                  onClick={() => setShowPresets(!showPresets)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    darkMode
+                      ? 'hover:bg-gray-800'
+                      : 'hover:bg-gray-200'
+                  }`}
+                  title="Quick presets"
+                >
+                  <Zap size={18} className="text-amber-500" />
+                </button>
+                {showPresets && (
+                  <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50 border ${
+                    darkMode
+                      ? 'bg-gray-800 border-gray-700'
+                      : 'bg-white border-gray-200'
+                  }`}>
+                    <div className="p-2 max-h-96 overflow-y-auto space-y-1">
+                      {presets.map((preset) => (
+                        <button
+                          key={preset.model}
+                          onClick={() => {
+                            setSelectedModel(preset.model);
+                            setShowPresets(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                            selectedModel === preset.model
+                              ? darkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
+                              : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="font-medium">{preset.name}</div>
+                          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {preset.model.split('/')[1].split(':')[0]}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               {messages.length > 0 && (
                 <button
                   onClick={exportChat}
-                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className={`p-2 rounded-lg transition-colors ${
+                    darkMode
+                      ? 'hover:bg-gray-800'
+                      : 'hover:bg-gray-200'
+                  }`}
                   title="Export chat"
                 >
                   <Download size={18} />
