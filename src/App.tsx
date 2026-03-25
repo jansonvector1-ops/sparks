@@ -532,6 +532,7 @@ function App() {
                     <ModelSelector
                       selectedModel={selectedModel}
                       onModelChange={setSelectedModel}
+                      darkMode={darkMode}
                     />
                   </div>
                 </div>
