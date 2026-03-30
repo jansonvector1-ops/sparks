@@ -1,22 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from './lib/supabase';
+import {
+  fetchConversations,
+  fetchMessages,
+  createConversation,
+  updateConversation,
+  deleteConversation as apiDeleteConversation,
+  createMessage,
+  deleteMessage as apiDeleteMessage,
+  streamChat,
+  type Message,
+  type Conversation,
+} from './lib/api';
 import { models } from './lib/models';
 import { ChatMessage } from './components/ChatMessage';
 import { ModelSelector } from './components/ModelSelector';
 import { ChatInput } from './components/ChatInput';
 import { MessageSquare, Plus, Moon, Sun, Trash2, Download, CreditCard as Edit2, Zap, Settings, Code2, Wand2, PenTool, Lightbulb, LogOut, Menu, X, Bot } from 'lucide-react';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface Conversation {
-  id: string;
-  title: string;
-  model: string;
-}
 
 function App() {
   const [selectedModel, setSelectedModel] = useState(models[0].id);
@@ -57,32 +56,25 @@ function App() {
   }, []);
 
   const loadConversations = async () => {
-    const { data } = await supabase
-      .from('conversations')
-      .select('id, title, model')
-      .order('updated_at', { ascending: false })
-      .limit(10);
-
-    if (data) {
+    try {
+      const data = await fetchConversations();
       setConversations(data);
+    } catch (err) {
+      console.error('Failed to load conversations', err);
     }
   };
 
   const loadConversation = async (conversationId: string) => {
-    const { data } = await supabase
-      .from('messages')
-      .select('id, role, content')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
-
-    if (data) {
+    try {
+      const data = await fetchMessages(conversationId);
       setMessages(data);
       setCurrentConversation(conversationId);
-
       const conversation = conversations.find(c => c.id === conversationId);
       if (conversation) {
         setSelectedModel(conversation.model);
       }
+    } catch (err) {
+      console.error('Failed to load conversation', err);
     }
   };
 
@@ -92,18 +84,26 @@ function App() {
   };
 
   const deleteConversation = async (id: string) => {
-    await supabase.from('conversations').delete().eq('id', id);
-    await loadConversations();
-    if (currentConversation === id) {
-      startNewConversation();
+    try {
+      await apiDeleteConversation(id);
+      await loadConversations();
+      if (currentConversation === id) {
+        startNewConversation();
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation', err);
     }
   };
 
   const renameConversation = async (id: string, newTitle: string) => {
     if (!newTitle.trim()) return;
-    await supabase.from('conversations').update({ title: newTitle }).eq('id', id);
-    await loadConversations();
-    setRenamingId(null);
+    try {
+      await updateConversation(id, newTitle);
+      await loadConversations();
+      setRenamingId(null);
+    } catch (err) {
+      console.error('Failed to rename conversation', err);
+    }
   };
 
   const exportChat = () => {
@@ -124,7 +124,11 @@ function App() {
   const deleteMessage = async (messageId: string) => {
     setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
     if (currentConversation) {
-      await supabase.from('messages').delete().eq('id', messageId);
+      try {
+        await apiDeleteMessage(messageId);
+      } catch (err) {
+        console.error('Failed to delete message', err);
+      }
     }
   };
 
@@ -138,19 +142,14 @@ function App() {
     let conversationId = currentConversation;
 
     if (!conversationId) {
-      const { data: newConv } = await supabase
-        .from('conversations')
-        .insert({
-          title: content.slice(0, 50),
-          model: selectedModel,
-        })
-        .select()
-        .single();
-
-      if (newConv) {
+      try {
+        const newConv = await createConversation(content.slice(0, 50), selectedModel);
         conversationId = newConv.id;
         setCurrentConversation(conversationId);
         await loadConversations();
+      } catch (err) {
+        console.error('Failed to create conversation', err);
+        return;
       }
     }
 
@@ -164,11 +163,11 @@ function App() {
     setIsLoading(true);
 
     if (conversationId) {
-      await supabase.from('messages').insert({
-        conversation_id: conversationId,
-        role: 'user',
-        content,
-      });
+      try {
+        await createMessage(conversationId, 'user', content);
+      } catch (err) {
+        console.error('Failed to save user message', err);
+      }
     }
 
     const assistantMessageId = crypto.randomUUID();
@@ -178,84 +177,54 @@ function App() {
     ]);
 
     try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
       const messagesForAPI = [...messages, userMessage].map(m => ({
         role: m.role,
         content: m.content,
       }));
 
       if (systemPrompt) {
-        messagesForAPI.unshift({
-          role: 'system',
-          content: systemPrompt,
-        });
+        messagesForAPI.unshift({ role: 'system', content: systemPrompt });
       }
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: selectedModel,
-          messages: messagesForAPI,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response from API');
-      }
-
-      const reader = response.body?.getReader();
+      const stream = await streamChat(selectedModel, messagesForAPI);
+      const reader = stream.getReader();
       const decoder = new TextDecoder();
       let fullResponse = '';
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
 
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content || '';
-                if (content) {
-                  fullResponse += content;
-                  setMessages((prev) =>
-                    prev.map((msg) =>
-                      msg.id === assistantMessageId
-                        ? { ...msg, content: fullResponse }
-                        : msg
-                    )
-                  );
-                }
-              } catch (e) {
-                console.error('Error parsing SSE data:', e);
+            try {
+              const parsed = JSON.parse(data);
+              const delta = parsed.choices?.[0]?.delta?.content || '';
+              if (delta) {
+                fullResponse += delta;
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: fullResponse }
+                      : msg
+                  )
+                );
               }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
             }
           }
         }
       }
 
       if (conversationId && fullResponse) {
-        await supabase.from('messages').insert({
-          conversation_id: conversationId,
-          role: 'assistant',
-          content: fullResponse,
-        });
-
-        await supabase
-          .from('conversations')
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', conversationId);
+        await createMessage(conversationId, 'assistant', fullResponse);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -379,7 +348,7 @@ function App() {
                 darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
               }`}
             >
-              {showSidebar ? <Menu size={20} /> : <Menu size={20} />}
+              <Menu size={20} />
             </button>
             <div className="flex-1" />
             <button
@@ -463,7 +432,7 @@ function App() {
               ))}
               {isLoading && (
                 <div className={`flex gap-4 p-4 ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-white`}>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-white">
                     <Bot size={18} />
                   </div>
                   <div className="flex gap-1">
