@@ -105,7 +105,7 @@ app.delete("/api/messages/:id", async (req, res) => {
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const { model, messages: chatMessages } = req.body;
+    const { model, messages: chatMessages, temperature, top_p, max_tokens, presence_penalty, frequency_penalty } = req.body;
 
     const openRouterApiKey = process.env.OPENROUTER_API_KEY;
     if (!openRouterApiKey) {
@@ -123,7 +123,16 @@ app.post("/api/chat", async (req, res) => {
           : "https://replit.com",
         "X-Title": "AI Chat App",
       },
-      body: JSON.stringify({ model, messages: chatMessages, stream: true }),
+      body: JSON.stringify({
+        model,
+        messages: chatMessages,
+        stream: true,
+        ...(temperature !== undefined && { temperature }),
+        ...(top_p !== undefined && { top_p }),
+        ...(max_tokens && { max_tokens }),
+        ...(presence_penalty !== undefined && { presence_penalty }),
+        ...(frequency_penalty !== undefined && { frequency_penalty }),
+      }),
     });
 
     if (!response.ok) {

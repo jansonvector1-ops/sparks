@@ -10,6 +10,15 @@ export interface Conversation {
   model: string;
 }
 
+export interface SamplingSettings {
+  temperature: number;
+  topP: number;
+  maxTokens: number;
+  presencePenalty: number;
+  frequencyPenalty: number;
+  systemPrompt: string;
+}
+
 // --- Conversations ---
 
 export async function fetchConversations(): Promise<Conversation[]> {
@@ -71,15 +80,26 @@ export async function deleteMessage(id: string): Promise<void> {
 export async function streamChat(
   model: string,
   chatMessages: { role: string; content: string }[],
+  sampling?: Partial<SamplingSettings>,
 ): Promise<ReadableStream<Uint8Array>> {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages: chatMessages }),
+    body: JSON.stringify({
+      model,
+      messages: chatMessages,
+      temperature: sampling?.temperature,
+      top_p: sampling?.topP,
+      max_tokens: sampling?.maxTokens || undefined,
+      presence_penalty: sampling?.presencePenalty,
+      frequency_penalty: sampling?.frequencyPenalty,
+    }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(err.error || 'Chat request failed');
+    const error: any = new Error(err.error || 'Chat request failed');
+    error.statusCode = res.status;
+    throw error;
   }
   return res.body!;
 }
