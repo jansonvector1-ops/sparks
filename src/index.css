@@ -1,3 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --surface: 0 0% 100%;
+  --surface-2: 220 14% 96%;
+  --surface-3: 220 13% 91%;
+  --border: 220 13% 88%;
+  --text-primary: 222 47% 11%;
+  --text-secondary: 215 16% 47%;
+  --text-muted: 215 16% 65%;
+  --accent: 246 83% 60%;
+  --accent-hover: 246 83% 52%;
+}
+
+.dark {
+  --surface: 222 47% 8%;
+  --surface-2: 222 40% 11%;
+  --surface-3: 222 35% 15%;
+  --border: 222 30% 19%;
+  --text-primary: 210 40% 98%;
+  --text-secondary: 215 20% 65%;
+  --text-muted: 215 16% 38%;
+  --accent: 246 83% 68%;
+  --accent-hover: 246 83% 76%;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: hsl(var(--surface));
+  color: hsl(var(--text-primary));
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-muted)); }
+
+.prose-message pre {
+  background: hsl(var(--surface-3));
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 10px 0;
+}
+
+.prose-message code:not(pre code) {
+  background: hsl(var(--surface-3));
+  border: 1px solid hsl(var(--border));
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+}
+
+.prose-message p { margin: 0 0 10px 0; line-height: 1.7; }
+.prose-message p:last-child { margin-bottom: 0; }
+.prose-message ul, .prose-message ol { padding-left: 22px; margin: 8px 0; }
+.prose-message li { margin: 5px 0; line-height: 1.65; }
+.prose-message h1, .prose-message h2, .prose-message h3 { font-weight: 600; margin: 14px 0 6px; line-height: 1.4; }
+.prose-message h1 { font-size: 1.2em; }
+.prose-message h2 { font-size: 1.1em; }
+.prose-message h3 { font-size: 1em; }
+.prose-message strong { font-weight: 600; }
+.prose-message em { font-style: italic; }
+.prose-message blockquote {
+  border-left: 3px solid hsl(var(--accent));
+  padding-left: 14px;
+  margin: 10px 0;
+  color: hsl(var(--text-secondary));
+  font-style: italic;
+}
+.prose-message hr { border: none; border-top: 1px solid hsl(var(--border)); margin: 12px 0; }
+.prose-message table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+.prose-message th, .prose-message td { border: 1px solid hsl(var(--border)); padding: 6px 10px; text-align: left; }
+.prose-message th { background: hsl(var(--surface-3)); font-weight: 600; }

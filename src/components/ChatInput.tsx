@@ -1,47 +1,62 @@
-import { useState } from 'react';
-import { Send } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ArrowUp, Square } from 'lucide-react';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   disabled: boolean;
-  darkMode?: boolean;
+  onStop?: () => void;
 }
 
-export function ChatInput({ onSendMessage, disabled, darkMode }: ChatInputProps) {
+export function ChatInput({ onSendMessage, disabled, onStop }: ChatInputProps) {
   const [input, setInput] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+    }
+  }, [input]);
+
+  const handleSubmit = () => {
     if (input.trim() && !disabled) {
       onSendMessage(input.trim());
       setInput('');
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
   };
 
   return (
-    <div className="p-4">
-      <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-3">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
-          disabled={disabled}
-          className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:cursor-not-allowed transition-colors ${
-            darkMode
-              ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500 disabled:bg-gray-900'
-              : 'bg-white border-gray-300 text-black placeholder-gray-500 disabled:bg-gray-100'
-          }`}
-        />
-        <button
-          type="submit"
-          disabled={disabled || !input.trim()}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-500 disabled:cursor-not-allowed transition-colors flex items-center gap-2 font-medium"
-        >
-          <Send size={18} />
-          Send
-        </button>
-      </form>
+    <div className="flex items-end gap-3 p-3 rounded-2xl border border-border bg-surface-2 shadow-sm transition-shadow focus-within:shadow-md focus-within:border-accent/40">
+      <textarea
+        ref={textareaRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Message... (Shift+Enter for new line)"
+        disabled={disabled}
+        rows={1}
+        className="flex-1 bg-transparent resize-none outline-none text-sm text-text-primary placeholder-text-muted disabled:opacity-50 leading-relaxed min-h-[24px] max-h-[200px] py-0.5"
+      />
+      <button
+        onClick={disabled ? onStop : handleSubmit}
+        className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+          disabled
+            ? 'bg-text-secondary/20 text-text-secondary hover:bg-text-secondary/30'
+            : input.trim()
+            ? 'bg-accent text-white hover:bg-accent-hover shadow-sm shadow-accent/30'
+            : 'bg-surface-3 text-text-muted cursor-not-allowed'
+        }`}
+      >
+        {disabled ? <Square size={14} /> : <ArrowUp size={16} strokeWidth={2.5} />}
+      </button>
     </div>
   );
 }

@@ -15,7 +15,10 @@ import { models } from './lib/models';
 import { ChatMessage } from './components/ChatMessage';
 import { ModelSelector } from './components/ModelSelector';
 import { ChatInput } from './components/ChatInput';
-import { MessageSquare, Plus, Moon, Sun, Trash2, Download, CreditCard as Edit2, Zap, Settings, Code2, Wand2, PenTool, Lightbulb, LogOut, Menu, X, Bot } from 'lucide-react';
+import {
+  MessageSquare, Plus, Moon, Sun, Trash2, Download,
+  PenLine, Zap, Code2, Wand2, PenTool, Lightbulb, Menu, X, Sparkles
+} from 'lucide-react';
 
 function App() {
   const [selectedModel, setSelectedModel] = useState(models[0].id);
@@ -23,32 +26,22 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversation, setCurrentConversation] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showPresets, setShowPresets] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const presets = [
-    { name: 'Ultra-fast response', model: 'stepfun/step-3.5-flash:free' },
-    { name: 'Best quality', model: 'nousresearch/hermes-3-llama-3.1-405b:free' },
-    { name: 'Balanced (Speed+Quality)', model: 'qwen/qwen3-next-80b-a3b-instruct:free' },
-    { name: 'Code generation', model: 'nvidia/nemotron-3-super-120b-a12b:free' },
-    { name: 'Mobile/lightweight', model: 'meta-llama/llama-3.2-3b-instruct:free' },
-    { name: 'Image analysis', model: 'nvidia/nemotron-nano-12b-v2-vl:free' },
-    { name: 'Creative writing', model: 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free' },
-    { name: 'Structured output', model: 'google/gemma-3-27b-it:free' },
-  ];
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) root.classList.add('dark');
+    else root.classList.remove('dark');
+  }, [darkMode]);
 
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -69,10 +62,8 @@ function App() {
       const data = await fetchMessages(conversationId);
       setMessages(data);
       setCurrentConversation(conversationId);
-      const conversation = conversations.find(c => c.id === conversationId);
-      if (conversation) {
-        setSelectedModel(conversation.model);
-      }
+      const conv = conversations.find(c => c.id === conversationId);
+      if (conv) setSelectedModel(conv.model);
     } catch (err) {
       console.error('Failed to load conversation', err);
     }
@@ -87,9 +78,7 @@ function App() {
     try {
       await apiDeleteConversation(id);
       await loadConversations();
-      if (currentConversation === id) {
-        startNewConversation();
-      }
+      if (currentConversation === id) startNewConversation();
     } catch (err) {
       console.error('Failed to delete conversation', err);
     }
@@ -102,38 +91,29 @@ function App() {
       await loadConversations();
       setRenamingId(null);
     } catch (err) {
-      console.error('Failed to rename conversation', err);
+      console.error('Failed to rename', err);
     }
   };
 
   const exportChat = () => {
-    const chatData = {
-      model: selectedModel,
-      messages,
-      timestamp: new Date().toISOString(),
-    };
-    const dataStr = JSON.stringify(chatData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `chat-${Date.now()}.json`;
-    link.click();
+    const data = JSON.stringify({ model: selectedModel, messages, timestamp: new Date().toISOString() }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-${Date.now()}.json`;
+    a.click();
   };
 
   const deleteMessage = async (messageId: string) => {
-    setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+    setMessages(prev => prev.filter(m => m.id !== messageId));
     if (currentConversation) {
-      try {
-        await apiDeleteMessage(messageId);
-      } catch (err) {
-        console.error('Failed to delete message', err);
-      }
+      try { await apiDeleteMessage(messageId); } catch {}
     }
   };
 
-  const filteredConversations = conversations.filter((conv) =>
-    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredConversations = conversations.filter(c =>
+    c.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSendMessage = async (content: string) => {
@@ -147,46 +127,25 @@ function App() {
         conversationId = newConv.id;
         setCurrentConversation(conversationId);
         await loadConversations();
-      } catch (err) {
-        console.error('Failed to create conversation', err);
+      } catch {
         return;
       }
     }
 
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const userMessage: Message = { id: crypto.randomUUID(), role: 'user', content };
+    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    if (conversationId) {
-      try {
-        await createMessage(conversationId, 'user', content);
-      } catch (err) {
-        console.error('Failed to save user message', err);
-      }
-    }
+    try { await createMessage(conversationId!, 'user', content); } catch {}
 
-    const assistantMessageId = crypto.randomUUID();
-    setMessages((prev) => [
-      ...prev,
-      { id: assistantMessageId, role: 'assistant', content: '' },
-    ]);
+    const assistantId = crypto.randomUUID();
+    setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
 
     try {
-      const messagesForAPI = [...messages, userMessage].map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
+      const msgHistory = [...messages, userMessage].map(m => ({ role: m.role, content: m.content }));
+      if (systemPrompt) msgHistory.unshift({ role: 'system', content: systemPrompt });
 
-      if (systemPrompt) {
-        messagesForAPI.unshift({ role: 'system', content: systemPrompt });
-      }
-
-      const stream = await streamChat(selectedModel, messagesForAPI);
+      const stream = await streamChat(selectedModel, msgHistory);
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let fullResponse = '';
@@ -194,131 +153,111 @@ function App() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices?.[0]?.delta?.content || '';
-              if (delta) {
-                fullResponse += delta;
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantMessageId
-                      ? { ...msg, content: fullResponse }
-                      : msg
-                  )
-                );
-              }
-            } catch (e) {
-              console.error('Error parsing SSE data:', e);
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              fullResponse += delta;
+              setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: fullResponse } : m));
             }
-          }
+          } catch {}
         }
       }
 
       if (conversationId && fullResponse) {
         await createMessage(conversationId, 'assistant', fullResponse);
       }
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMessageId
-            ? { ...msg, content: 'Error: Failed to get response. Please try again.' }
-            : msg
-        )
-      );
+    } catch {
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId ? { ...m, content: 'Something went wrong. Please try again.' } : m
+      ));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const quickActions = [
+    { icon: <Code2 size={18} />, label: 'Code', prompt: 'Help me write code for: ', color: 'text-blue-500' },
+    { icon: <Wand2 size={18} />, label: 'Create', prompt: 'Create: ', color: 'text-purple-500' },
+    { icon: <PenTool size={18} />, label: 'Write', prompt: 'Write: ', color: 'text-cyan-500' },
+    { icon: <Lightbulb size={18} />, label: 'Explain', prompt: 'Explain: ', color: 'text-amber-500' },
+    { icon: <Zap size={18} />, label: 'Summarize', prompt: 'Summarize: ', color: 'text-emerald-500' },
+  ];
+
   return (
-    <div className={`flex h-screen ${darkMode ? 'bg-gray-950' : 'bg-white'}`}>
-      <div className={`${showSidebar ? 'w-60' : 'w-0'} ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-900'} text-white flex flex-col border-r transition-all duration-300 overflow-hidden`}>
-        <div className="p-3 space-y-3 border-b border-gray-800">
+    <div className="flex h-screen bg-surface text-text-primary overflow-hidden">
+
+      {/* Sidebar */}
+      <aside className={`${showSidebar ? 'w-64' : 'w-0'} flex-shrink-0 transition-all duration-300 overflow-hidden border-r border-border bg-surface-2 flex flex-col`}>
+        <div className="p-3 space-y-2 border-b border-border flex-shrink-0">
+          <div className="flex items-center gap-2 px-1 py-1 mb-1">
+            <div className="w-6 h-6 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Sparkles size={14} className="text-accent" />
+            </div>
+            <span className="font-semibold text-sm text-text-primary">AI Chat</span>
+          </div>
           <button
             onClick={startNewConversation}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium text-sm"
+            className="w-full flex items-center gap-2 px-3 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent-hover transition-colors"
           >
-            <Plus size={16} />
-            New Chat
+            <Plus size={15} />
+            New conversation
           </button>
-          <input
-            type="text"
-            placeholder="Search chats..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-surface placeholder-text-muted text-text-primary focus:outline-none focus:border-accent/40 transition-colors"
+            />
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
           {filteredConversations.length === 0 ? (
-            <p className="text-xs text-gray-500 p-3">No conversations</p>
+            <p className="text-xs text-text-muted px-3 py-4 text-center">No conversations yet</p>
           ) : (
-            filteredConversations.map((conv) => (
-              <div
-                key={conv.id}
-                className={`group rounded-lg transition-colors ${
-                  currentConversation === conv.id
-                    ? 'bg-gray-800'
-                    : 'hover:bg-gray-800'
-                }`}
-              >
+            filteredConversations.map(conv => (
+              <div key={conv.id} className={`group rounded-xl transition-colors ${currentConversation === conv.id ? 'bg-surface-3' : 'hover:bg-surface-3'}`}>
                 {renamingId === conv.id ? (
-                  <div className="p-2 flex gap-2">
+                  <div className="flex gap-1.5 p-2">
                     <input
-                      type="text"
                       value={renameText}
-                      onChange={(e) => setRenameText(e.target.value)}
-                      className="flex-1 px-2 py-1 bg-gray-700 rounded text-sm text-white focus:outline-none"
+                      onChange={e => setRenameText(e.target.value)}
+                      className="flex-1 px-2 py-1 text-xs rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:border-accent/40"
                       autoFocus
-                      onKeyDown={(e) => {
+                      onKeyDown={e => {
                         if (e.key === 'Enter') renameConversation(conv.id, renameText);
                         if (e.key === 'Escape') setRenamingId(null);
                       }}
                     />
-                    <button
-                      onClick={() => renameConversation(conv.id, renameText)}
-                      className="px-2 py-1 bg-blue-600 rounded text-xs hover:bg-blue-700"
-                    >
-                      Save
-                    </button>
+                    <button onClick={() => renameConversation(conv.id, renameText)} className="text-xs px-2 py-1 bg-accent text-white rounded-lg">Save</button>
                   </div>
                 ) : (
                   <button
                     onClick={() => loadConversation(conv.id)}
-                    className="w-full text-left px-3 py-2 flex items-start gap-2 group-hover:opacity-100"
+                    className="w-full text-left px-3 py-2.5 flex items-center gap-2"
                   >
-                    <MessageSquare size={14} className="mt-1 flex-shrink-0" />
-                    <span className="text-sm truncate flex-1">{conv.title}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MessageSquare size={13} className="flex-shrink-0 text-text-muted" />
+                    <span className="text-xs truncate flex-1 text-text-primary">{conv.title}</span>
+                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setRenamingId(conv.id);
-                          setRenameText(conv.title);
-                        }}
-                        className="p-1 hover:bg-gray-700 rounded"
+                        onClick={e => { e.stopPropagation(); setRenamingId(conv.id); setRenameText(conv.title); }}
+                        className="p-1 rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary"
                       >
-                        <Edit2 size={12} />
+                        <PenLine size={11} />
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteConversation(conv.id);
-                        }}
-                        className="p-1 hover:bg-red-600 rounded"
+                        onClick={e => { e.stopPropagation(); deleteConversation(conv.id); }}
+                        className="p-1 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/30 text-text-muted hover:text-red-500"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={11} />
                       </button>
                     </div>
                   </button>
@@ -328,188 +267,105 @@ function App() {
           )}
         </div>
 
-        <div className="p-3 border-t border-gray-800">
+        <div className="p-3 border-t border-border flex-shrink-0">
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-sm"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-text-secondary hover:bg-surface-3 transition-colors"
           >
-            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-            {darkMode ? 'Light' : 'Dark'}
+            {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+            {darkMode ? 'Light mode' : 'Dark mode'}
           </button>
         </div>
-      </div>
+      </aside>
 
-      <div className="flex-1 flex flex-col">
-        <div className={`border-b ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
-          <div className="px-6 py-4 flex items-center justify-between">
-            <button
-              onClick={() => setShowSidebar(!showSidebar)}
-              className={`p-2 rounded-lg transition-colors ${
-                darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-              }`}
-            >
-              <Menu size={20} />
-            </button>
-            <div className="flex-1" />
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* Header */}
+        <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface flex-shrink-0">
+          <button
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-surface-2 transition-colors text-text-secondary"
+          >
+            {showSidebar ? <X size={16} /> : <Menu size={16} />}
+          </button>
+          <div className="flex-1 min-w-0">
+            {currentConversation && (
+              <p className="text-sm font-medium truncate text-text-primary">
+                {conversations.find(c => c.id === currentConversation)?.title ?? 'Conversation'}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <button
+                onClick={exportChat}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-text-secondary hover:bg-surface-2 hover:text-text-primary transition-colors"
+              >
+                <Download size={13} />
+                Export
+              </button>
+            )}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-lg transition-colors ${
-                darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-              }`}
+              className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-surface-2 transition-colors text-text-secondary"
             >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
-        </div>
+        </header>
 
-        <div className={`flex-1 overflow-y-auto ${darkMode ? 'bg-gray-950' : 'bg-white'}`}>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center max-w-2xl px-4">
-                <div className="mb-8">
-                  <div className={`text-5xl mb-4 ${darkMode ? 'text-orange-500' : 'text-orange-600'}`}>✨</div>
-                  <h1 className={`text-4xl font-light mb-3 ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    Good <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>evening</span>
-                  </h1>
-                  <div className="flex items-center justify-center gap-2 mb-8">
-                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Free plan</span>
-                    <span className={darkMode ? 'text-gray-600' : 'text-gray-300'}>•</span>
-                    <button className={`text-sm font-medium ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors`}>
-                      Upgrade
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
-                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
-                  }`}>
-                    <Code2 size={20} className={darkMode ? 'text-gray-400 group-hover:text-blue-400' : 'text-gray-600 group-hover:text-blue-600'} />
-                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Code</span>
+            <div className="h-full flex flex-col items-center justify-center px-6 py-12 animate-fade-in">
+              <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-5">
+                <Sparkles size={24} className="text-accent" />
+              </div>
+              <h1 className="text-2xl font-semibold text-text-primary mb-2">What can I help with?</h1>
+              <p className="text-sm text-text-secondary mb-10 text-center max-w-sm">
+                Choose a model below and start a conversation, or try one of the quick actions.
+              </p>
+              <div className="grid grid-cols-5 gap-2 mb-10 w-full max-w-lg">
+                {quickActions.map(action => (
+                  <button
+                    key={action.label}
+                    onClick={() => handleSendMessage(action.prompt)}
+                    className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-border hover:border-accent/30 hover:bg-surface-2 transition-all group"
+                  >
+                    <span className={`${action.color} group-hover:scale-110 transition-transform`}>{action.icon}</span>
+                    <span className="text-xs font-medium text-text-secondary">{action.label}</span>
                   </button>
-                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
-                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
-                  }`}>
-                    <Wand2 size={20} className={darkMode ? 'text-gray-400 group-hover:text-purple-400' : 'text-gray-600 group-hover:text-purple-600'} />
-                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Create</span>
-                  </button>
-                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
-                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
-                  }`}>
-                    <PenTool size={20} className={darkMode ? 'text-gray-400 group-hover:text-cyan-400' : 'text-gray-600 group-hover:text-cyan-600'} />
-                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Write</span>
-                  </button>
-                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
-                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
-                  }`}>
-                    <Lightbulb size={20} className={darkMode ? 'text-gray-400 group-hover:text-yellow-400' : 'text-gray-600 group-hover:text-yellow-600'} />
-                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Learn</span>
-                  </button>
-                  <button className={`group flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
-                    darkMode ? 'hover:bg-gray-800 border border-gray-800' : 'hover:bg-gray-50 border border-gray-100'
-                  }`}>
-                    <Zap size={20} className={darkMode ? 'text-gray-400 group-hover:text-orange-400' : 'text-gray-600 group-hover:text-orange-600'} />
-                    <span className={`text-xs ${darkMode ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-gray-900'}`}>Presets</span>
-                  </button>
-                </div>
-
-                <div className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>
-                  Select a model and start chatting, or try one of the quick actions above
-                </div>
+                ))}
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto w-full">
-              {messages.map((message) => (
+            <div className="max-w-3xl mx-auto w-full py-6 space-y-1">
+              {messages.map(message => (
                 <ChatMessage
                   key={message.id}
                   role={message.role}
                   content={message.content}
                   messageId={message.id}
                   onDelete={deleteMessage}
-                  darkMode={darkMode}
                 />
               ))}
-              {isLoading && (
-                <div className={`flex gap-4 p-4 ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-gray-700 text-white">
-                    <Bot size={18} />
-                  </div>
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '100ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '200ms' }}></div>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} className="h-4" />
             </div>
           )}
         </div>
 
-        <div className={`border-t ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-6`}>
-          <div className="max-w-4xl mx-auto space-y-4">
-            {messages.length === 0 && (
-              <div className="mb-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowPresets(!showPresets)}
-                      className={`p-2.5 rounded-lg border transition-all ${
-                        darkMode
-                          ? 'border-gray-700 hover:bg-gray-800'
-                          : 'border-gray-300 hover:bg-gray-50'
-                      }`}
-                      title="Quick presets"
-                    >
-                      <Zap size={18} className="text-amber-500" />
-                    </button>
-                    {showPresets && (
-                      <div className={`absolute left-0 bottom-12 w-64 rounded-lg shadow-xl z-50 border ${
-                        darkMode
-                          ? 'bg-gray-800 border-gray-700'
-                          : 'bg-white border-gray-200'
-                      }`}>
-                        <div className="p-2 space-y-1">
-                          {presets.map((preset) => (
-                            <button
-                              key={preset.model}
-                              onClick={() => {
-                                setSelectedModel(preset.model);
-                                setShowPresets(false);
-                              }}
-                              className={`w-full text-left px-4 py-2.5 rounded-lg text-sm transition-colors flex items-start gap-3 ${
-                                selectedModel === preset.model
-                                  ? darkMode ? 'bg-blue-600/20 text-blue-400 border border-blue-600' : 'bg-blue-50 text-blue-600 border border-blue-200'
-                                  : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
-                              }`}
-                            >
-                              <Zap size={14} className="mt-0.5 flex-shrink-0" />
-                              <div>
-                                <div className="font-medium">{preset.name}</div>
-                                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                  {preset.model.split('/')[1].split(':')[0]}
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <ModelSelector
-                      selectedModel={selectedModel}
-                      onModelChange={setSelectedModel}
-                      darkMode={darkMode}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-            <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} darkMode={darkMode} />
+        {/* Input area */}
+        <div className="flex-shrink-0 px-4 pb-4 pt-2 bg-surface border-t border-border">
+          <div className="max-w-3xl mx-auto space-y-2">
+            <ModelSelector selectedModel={selectedModel} onModelChange={setSelectedModel} />
+            <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+            <p className="text-center text-[11px] text-text-muted">
+              AI can make mistakes — verify important information.
+            </p>
           </div>
         </div>
+
       </div>
     </div>
   );
