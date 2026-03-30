@@ -127,8 +127,22 @@ app.post("/api/chat", async (req, res) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      res.status(response.status).json({ error: `OpenRouter API error: ${errorData}` });
+      const errorText = await response.text();
+      let friendlyError = "The AI service returned an error. Please try again.";
+      try {
+        const parsed = JSON.parse(errorText);
+        const msg: string = parsed?.error?.message ?? "";
+        const code: number = parsed?.error?.code ?? response.status;
+        if (code === 429 || msg.toLowerCase().includes("rate")) {
+          friendlyError = "This model is currently rate-limited. Please try a different model or wait a moment.";
+        } else if (code === 404 || msg.toLowerCase().includes("no endpoint")) {
+          friendlyError = "This model is not currently available. Please select a different model.";
+        } else if (msg) {
+          friendlyError = msg;
+        }
+      } catch {}
+      console.error("OpenRouter error:", errorText);
+      res.status(response.status).json({ error: friendlyError });
       return;
     }
 

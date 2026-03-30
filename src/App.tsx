@@ -172,9 +172,10 @@ function App() {
       if (conversationId && fullResponse) {
         await createMessage(conversationId, 'assistant', fullResponse);
       }
-    } catch {
+    } catch (err: any) {
+      const errMsg = err?.message || 'Something went wrong. Please try again.';
       setMessages(prev => prev.map(m =>
-        m.id === assistantId ? { ...m, content: 'Something went wrong. Please try again.' } : m
+        m.id === assistantId ? { ...m, content: `⚠️ ${errMsg}` } : m
       ));
     } finally {
       setIsLoading(false);
@@ -240,9 +241,9 @@ function App() {
                     <button onClick={() => renameConversation(conv.id, renameText)} className="text-xs px-2 py-1 bg-accent text-white rounded-lg">Save</button>
                   </div>
                 ) : (
-                  <button
+                  <div
                     onClick={() => loadConversation(conv.id)}
-                    className="w-full text-left px-3 py-2.5 flex items-center gap-2"
+                    className="w-full text-left px-3 py-2.5 flex items-center gap-2 cursor-pointer"
                   >
                     <MessageSquare size={13} className="flex-shrink-0 text-text-muted" />
                     <span className="text-xs truncate flex-1 text-text-primary">{conv.title}</span>
@@ -260,7 +261,7 @@ function App() {
                         <Trash2 size={11} />
                       </button>
                     </div>
-                  </button>
+                  </div>
                 )}
               </div>
             ))

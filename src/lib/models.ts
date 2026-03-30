@@ -8,11 +8,31 @@ export interface Model {
 
 export const models: Model[] = [
   {
+    id: "nvidia/nemotron-3-super-120b-a12b:free",
+    name: "Nemotron 120B",
+    description: "NVIDIA's most powerful — great for code & reasoning",
+    category: "powerful",
+    badge: "Best for Code"
+  },
+  {
+    id: "nvidia/nemotron-3-nano-30b-a3b:free",
+    name: "Nemotron 30B",
+    description: "Fast NVIDIA model with strong performance",
+    category: "fast",
+    badge: "Recommended"
+  },
+  {
     id: "meta-llama/llama-3.3-70b-instruct:free",
     name: "Llama 3.3 70B",
-    description: "Meta's latest flagship — fast & capable",
+    description: "Meta's latest flagship — capable & fast",
     category: "balanced",
     badge: "Popular"
+  },
+  {
+    id: "meta-llama/llama-3.2-3b-instruct:free",
+    name: "Llama 3.2 3B",
+    description: "Lightweight & quick for simple tasks",
+    category: "fast",
   },
   {
     id: "google/gemma-3-27b-it:free",
@@ -27,37 +47,17 @@ export const models: Model[] = [
     category: "fast",
   },
   {
-    id: "qwen/qwen3-30b-a3b:free",
-    name: "Qwen3 30B",
-    description: "Alibaba's strong reasoning model",
-    category: "balanced",
-    badge: "New"
-  },
-  {
-    id: "nvidia/nemotron-3-super-120b-a12b:free",
-    name: "Nemotron 120B",
-    description: "NVIDIA's most powerful model",
-    category: "powerful",
-    badge: "Best for Code"
-  },
-  {
     id: "nousresearch/hermes-3-llama-3.1-405b:free",
     name: "Hermes 3 405B",
-    description: "Massive NousResearch model",
+    description: "Highest quality for complex tasks",
     category: "powerful",
     badge: "Highest Quality"
   },
   {
     id: "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
     name: "Dolphin Mistral 24B",
-    description: "Uncensored, great for creative tasks",
+    description: "Great for creative & uncensored tasks",
     category: "creative",
-  },
-  {
-    id: "openai/gpt-oss-20b:free",
-    name: "GPT OSS 20B",
-    description: "OpenAI open-source variant",
-    category: "balanced",
   },
   {
     id: "stepfun/step-3.5-flash:free",
