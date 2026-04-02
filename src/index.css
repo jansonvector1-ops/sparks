@@ -4,28 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light mode */
 :root {
-  --surface: 0 0% 100%;
-  --surface-2: 220 14% 96%;
-  --surface-3: 220 13% 91%;
-  --border: 220 13% 88%;
-  --text-primary: 222 47% 11%;
-  --text-secondary: 215 16% 47%;
-  --text-muted: 215 16% 65%;
-  --accent: 246 83% 60%;
-  --accent-hover: 246 83% 52%;
+  --surface:     220 16% 96%;
+  --surface-2:   220 14% 92%;
+  --surface-3:   220 12% 87%;
+  --border:      220 12% 82%;
+  --text-primary:   222 47% 11%;
+  --text-secondary: 215 16% 40%;
+  --text-muted:     215 16% 58%;
+  --accent:      246 83% 60%;
+  --accent-hover:246 83% 52%;
 }
 
+/* Dark mode — llama.cpp near-black palette */
 .dark {
-  --surface: 222 47% 8%;
-  --surface-2: 222 40% 11%;
-  --surface-3: 222 35% 15%;
-  --border: 222 30% 19%;
-  --text-primary: 210 40% 98%;
-  --text-secondary: 215 20% 65%;
-  --text-muted: 215 16% 38%;
-  --accent: 246 83% 68%;
-  --accent-hover: 246 83% 76%;
+  --surface:     220 20% 5%;
+  --surface-2:   220 18% 8%;
+  --surface-3:   220 16% 12%;
+  --border:      220 14% 16%;
+  --text-primary:   210 20% 92%;
+  --text-secondary: 215 12% 55%;
+  --text-muted:     215 10% 36%;
+  --accent:      246 83% 68%;
+  --accent-hover:246 83% 76%;
 }
 
 * { box-sizing: border-box; }
@@ -41,6 +43,17 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-muted)); }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.18s ease-out both; }
+
+@keyframes pulse-dot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40%            { transform: scale(1);   opacity: 1; }
+}
 
 .prose-message pre {
   background: hsl(var(--surface-3));
