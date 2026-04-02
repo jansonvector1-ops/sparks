@@ -65,7 +65,7 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
   return (
     <div className="rounded-2xl border border-border bg-surface-2 shadow-lg transition-shadow focus-within:border-border focus-within:shadow-xl overflow-hidden">
       {/* Textarea */}
-      <div className="px-4 pt-4 pb-2">
+      <div className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2">
         <textarea
           ref={textareaRef}
           value={input}
@@ -75,12 +75,12 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
           disabled={disabled}
           rows={1}
           data-testid="input-message"
-          className="w-full bg-transparent resize-none outline-none text-sm text-text-primary placeholder-text-muted disabled:opacity-50 leading-relaxed min-h-[28px] max-h-[200px]"
+          className="w-full bg-transparent resize-none outline-none text-xs sm:text-sm text-text-primary placeholder-text-muted disabled:opacity-50 leading-relaxed min-h-[24px] sm:min-h-[28px] max-h-[200px]"
         />
       </div>
 
       {/* Bottom bar */}
-      <div className="flex items-center justify-between px-3 pb-3">
+      <div className="flex items-center justify-between px-2 sm:px-3 pb-2 sm:pb-3 gap-2">
         {/* Model selector */}
         <div>
           <button
@@ -88,10 +88,10 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
             type="button"
             onClick={() => setShowModelMenu(v => !v)}
             data-testid="button-model-selector"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors"
+            className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-lg text-[9px] sm:text-xs text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors flex-shrink-0"
           >
-            <span className="font-medium">{currentModel.name}</span>
-            <ChevronDown size={11} className={`transition-transform ${showModelMenu ? 'rotate-180' : ''}`} />
+            <span className="font-medium truncate max-w-[80px] sm:max-w-[120px]">{currentModel.name.split(' ')[0]}</span>
+            <ChevronDown size={9} className={`transition-transform flex-shrink-0 ${showModelMenu ? 'rotate-180' : ''}`} />
           </button>
 
           {showModelMenu && (
@@ -133,7 +133,7 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
           type="button"
           onClick={disabled ? undefined : handleSubmit}
           data-testid="button-send"
-          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
+          className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-all flex-shrink-0 ${
             disabled
               ? 'bg-surface-3 text-text-muted cursor-not-allowed'
               : input.trim()
@@ -141,7 +141,8 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
               : 'bg-surface-3 text-text-muted cursor-not-allowed'
           }`}
         >
-          {disabled ? <Square size={13} /> : <ArrowUp size={15} strokeWidth={2.5} />}
+          {disabled ? <Square size={11} className="sm:hidden" /> : <ArrowUp size={13} className="sm:hidden" strokeWidth={2.5} />}
+          {disabled ? <Square size={13} className="hidden sm:block" /> : <ArrowUp size={15} className="hidden sm:block" strokeWidth={2.5} />}
         </button>
       </div>
     </div>

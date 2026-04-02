@@ -32,7 +32,7 @@ function App() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   // Sidebar state
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(window.innerWidth >= 768);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -243,57 +243,57 @@ function App() {
 
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside
-        className={`${showSidebar ? 'w-56' : 'w-0'} flex-shrink-0 transition-all duration-200 overflow-hidden border-r border-border bg-surface-2 flex flex-col`}
+        className={`${showSidebar ? 'w-48 sm:w-56' : 'w-0'} flex-shrink-0 transition-all duration-200 overflow-hidden border-r border-border bg-surface-2 flex flex-col`}
       >
         {/* Logo */}
-        <div className="px-4 pt-5 pb-3 flex-shrink-0">
-          <span className="font-mono font-bold text-base tracking-tight text-text-primary select-none">
+        <div className="px-3 sm:px-4 pt-5 pb-3 flex-shrink-0">
+          <span className="font-mono font-bold text-xs sm:text-base tracking-tight text-text-primary select-none">
             AI Chat
           </span>
         </div>
 
         {/* Nav items */}
-        <div className="px-2 space-y-0.5 flex-shrink-0">
+        <div className="px-1.5 sm:px-2 space-y-0.5 flex-shrink-0">
           <button
             onClick={startNewChat}
             data-testid="button-new-chat"
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors"
+            className="w-full flex items-center gap-2.5 px-2 sm:px-3 py-2 rounded-xl text-xs sm:text-sm text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors"
           >
-            <SquarePen size={15} />
-            New chat
+            <SquarePen size={14} className="flex-shrink-0" />
+            <span className="hidden sm:inline">New chat</span>
           </button>
           <button
             onClick={() => setShowSearch(v => !v)}
             data-testid="button-search"
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors"
+            className="w-full flex items-center gap-2.5 px-2 sm:px-3 py-2 rounded-xl text-xs sm:text-sm text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors"
           >
-            <Search size={15} />
-            Search
+            <Search size={14} className="flex-shrink-0" />
+            <span className="hidden sm:inline">Search</span>
           </button>
         </div>
 
         {/* Search input */}
         {showSearch && (
-          <div className="px-2 mt-1 animate-fade-in">
+          <div className="px-1.5 sm:px-2 mt-1 animate-fade-in">
             <input
               type="text"
-              placeholder="Search conversations..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               autoFocus
-              className="w-full px-3 py-1.5 text-xs rounded-xl border border-border bg-surface placeholder-text-muted text-text-primary focus:outline-none focus:border-accent/40 transition-colors"
+              className="w-full px-2 sm:px-3 py-1.5 text-xs rounded-xl border border-border bg-surface placeholder-text-muted text-text-primary focus:outline-none focus:border-accent/40 transition-colors"
             />
           </div>
         )}
 
         {/* Conversations */}
-        <div className="mt-4 px-3 mb-1 flex-shrink-0">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-text-muted">Conversations</span>
+        <div className="mt-4 px-2 sm:px-3 mb-1 flex-shrink-0">
+          <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-text-muted">Chats</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
+        <div className="flex-1 overflow-y-auto px-1.5 sm:px-2 pb-2 space-y-0.5">
           {filteredConversations.length === 0 ? (
-            <p className="text-xs text-text-muted px-3 py-3">No conversations yet</p>
+            <p className="text-xs text-text-muted px-3 py-3">No chats</p>
           ) : filteredConversations.map(conv => (
             <div
               key={conv.id}
@@ -311,27 +311,27 @@ function App() {
                       if (e.key === 'Escape') setRenamingId(null);
                     }}
                   />
-                  <button onClick={() => renameConversation(conv.id, renameText)} className="text-[11px] px-2 bg-accent text-white rounded-lg">OK</button>
+                  <button onClick={() => renameConversation(conv.id, renameText)} className="text-[10px] px-1.5 bg-accent text-white rounded-lg flex-shrink-0">OK</button>
                 </div>
               ) : (
                 <div
                   onClick={() => loadConversation(conv.id)}
-                  className="flex items-center gap-2 px-3 py-2 cursor-pointer"
+                  className="flex items-center gap-2 px-2 sm:px-3 py-2 cursor-pointer"
                 >
-                  <MessageSquare size={12} className="flex-shrink-0 text-text-muted" />
+                  <MessageSquare size={11} className="flex-shrink-0 text-text-muted" />
                   <span className="text-xs truncate flex-1 text-text-primary">{conv.title}</span>
                   <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button
                       onClick={e => { e.stopPropagation(); setRenamingId(conv.id); setRenameText(conv.title); }}
                       className="p-1 rounded-md hover:bg-surface-2 text-text-muted hover:text-text-primary"
                     >
-                      <PenLine size={11} />
+                      <PenLine size={10} />
                     </button>
                     <button
                       onClick={e => { e.stopPropagation(); deleteConversation(conv.id); }}
                       className="p-1 rounded-md hover:bg-surface-2 text-text-muted hover:text-red-400"
                     >
-                      <Trash2 size={11} />
+                      <Trash2 size={10} />
                     </button>
                   </div>
                 </div>
@@ -381,12 +381,12 @@ function App() {
         </div>
 
         {/* Input area — centered on page */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-full max-w-3xl px-4 pointer-events-auto">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none py-4 sm:py-0">
+          <div className="w-full max-w-md sm:max-w-2xl lg:max-w-3xl px-3 sm:px-4 pointer-events-auto">
             {messages.length === 0 && (
-              <div className="text-center mb-10">
-                <h1 className="font-mono font-bold text-3xl tracking-tight text-text-primary mb-2">AI Chat</h1>
-                <p className="text-sm text-text-muted">Type a message to get started</p>
+              <div className="text-center mb-8 sm:mb-10">
+                <h1 className="font-mono font-bold text-2xl sm:text-3xl tracking-tight text-text-primary mb-2">AI Chat</h1>
+                <p className="text-xs sm:text-sm text-text-muted">Type a message to get started</p>
               </div>
             )}
             <ChatInput
@@ -395,9 +395,9 @@ function App() {
               selectedModel={selectedModel}
               onModelChange={setSelectedModel}
             />
-            <p className="text-center text-[11px] text-text-muted mt-2.5">
-              Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send,&nbsp;
-              <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Shift+Enter</kbd> for new line
+            <p className="text-center text-[10px] sm:text-[11px] text-text-muted mt-2">
+              <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send</span>
+              <span className="sm:hidden">Tap send button</span>
             </p>
           </div>
         </div>
