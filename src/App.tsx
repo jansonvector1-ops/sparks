@@ -77,12 +77,20 @@ function App() {
       setCurrentConversation(id);
       const conv = conversations.find(c => c.id === id);
       if (conv) setSelectedModel(conv.model);
+      // Auto-hide sidebar on mobile when viewing a chat
+      if (window.innerWidth < 768) {
+        setShowSidebar(false);
+      }
     } catch {}
   };
 
   const startNewChat = () => {
     setMessages([]);
     setCurrentConversation(null);
+    // Show sidebar on mobile when starting new chat
+    if (window.innerWidth < 768) {
+      setShowSidebar(true);
+    }
   };
 
   const deleteConversation = async (id: string) => {
@@ -347,7 +355,13 @@ function App() {
         {/* Top bar */}
         <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-3 py-2.5 z-10">
           <button
-            onClick={() => setShowSidebar(v => !v)}
+            onClick={() => {
+              if (currentConversation && window.innerWidth < 768) {
+                setShowSidebar(true);
+              } else {
+                setShowSidebar(v => !v);
+              }
+            }}
             data-testid="button-sidebar-toggle"
             className="w-8 h-8 flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
           >
