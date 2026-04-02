@@ -50,3 +50,12 @@ externalPort = 3000
 [[ports]]
 localPort = 5002
 externalPort = 3002
+
+[rules]
+
+[rules.formatter]
+
+[rules.formatter.fileExtensions]
+
+[rules.formatter.fileExtensions.".tsx"]
+id = "module:nodejs-20/formatter:prettier"
