@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Square, ChevronDown, Check } from 'lucide-react';
+import { ArrowUp, Square, ChevronDown, Check, ChevronRight } from 'lucide-react';
 import { models, categoryLabels } from '../lib/models';
 
 interface ChatInputProps {
@@ -45,7 +45,7 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
       const rect = buttonRef.current.getBoundingClientRect();
       setMenuPos({
         top: rect.top,
-        left: rect.right + 8,
+        left: rect.right + 1,
       });
     }
   }, [showModelMenu]);
@@ -91,7 +91,7 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
             type="button"
             onClick={() => setShowModelMenu(v => !v)}
             data-testid="button-model-selector"
-            className="flex items-center gap-1 px-1.5 sm:px-2 py-1.5 rounded-lg text-[9px] sm:text-xs text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors flex-shrink-0"
+            className="flex items-center gap-1 px-1.5 sm:px-2 py.5 rounded-lg text-[9px] sm:text-xs text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors flex-shrink-0"
           >
             <span className="font-medium truncate max-w-[80px] sm:max-w-[120px]">{currentModel.name.split(' ')[0]}</span>
             <ChevronDown size={9} className={`transition-transform flex-shrink-0 ${showModelMenu ? 'rotate-180' : ''}`} />
