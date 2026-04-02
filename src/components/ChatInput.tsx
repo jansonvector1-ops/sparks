@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ArrowUp, Square, ChevronDown, Check } from 'lucide-react';
-import { models } from '../lib/models';
+import { models, categoryLabels } from '../lib/models';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -12,12 +12,15 @@ interface ChatInputProps {
 export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChange }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const currentModel = models.find(m => m.id === selectedModel) ?? models[0];
+  const categories = Array.from(new Set(models.map(m => m.category)));
+  const filteredModels = selectedCategory ? models.filter(m => m.category === selectedCategory) : models;
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -97,33 +100,65 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
           {showModelMenu && (
             <div 
               ref={menuRef}
-              className="fixed w-64 rounded-xl border border-border bg-surface shadow-2xl z-50 py-1.5 animate-fade-in max-h-[400px] overflow-y-auto"
-              style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, transform: 'translateY(-50%)' }}
+              className="fixed rounded-xl border border-border bg-surface shadow-2xl z-50 animate-fade-in"
+              style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, transform: 'translateY(-50%)', width: '280px' }}
             >
-              {models.map(m => (
+              {/* Category tabs */}
+              <div className="flex gap-1 p-2 border-b border-border flex-wrap">
                 <button
-                  key={m.id}
                   type="button"
-                  onClick={() => { onModelChange(m.id); setShowModelMenu(false); }}
-                  data-testid={`button-model-${m.id}`}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface-2 transition-colors"
+                  onClick={() => setSelectedCategory(null)}
+                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    selectedCategory === null
+                      ? 'bg-accent text-white'
+                      : 'bg-surface-2 text-text-secondary hover:text-text-primary'
+                  }`}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-text-primary truncate">{m.name}</span>
-                      {m.badge && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-accent/15 text-accent font-medium flex-shrink-0">
-                          {m.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-text-muted truncate mt-0.5">{m.description}</p>
-                  </div>
-                  {m.id === selectedModel && (
-                    <Check size={13} className="text-accent flex-shrink-0" />
-                  )}
+                  All
                 </button>
-              ))}
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      selectedCategory === cat
+                        ? 'bg-accent text-white'
+                        : 'bg-surface-2 text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    {categoryLabels[cat]}
+                  </button>
+                ))}
+              </div>
+
+              {/* Model list */}
+              <div className="max-h-[300px] overflow-y-auto py-1.5">
+                {filteredModels.map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => { onModelChange(m.id); setShowModelMenu(false); setSelectedCategory(null); }}
+                    data-testid={`button-model-${m.id}`}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-surface-2 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-text-primary truncate">{m.name}</span>
+                        {m.badge && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-accent/15 text-accent font-medium flex-shrink-0">
+                            {m.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-text-muted truncate mt-0.5">{m.description}</p>
+                    </div>
+                    {m.id === selectedModel && (
+                      <Check size={13} className="text-accent flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
