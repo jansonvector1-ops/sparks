@@ -10,14 +10,14 @@ export const models: Model[] = [
   {
     id: "nvidia/nemotron-3-super-120b-a12b:free",
     name: "Nemotron 120B",
-    description: "NVIDIA's most powerful — great for code & reasoning",
+    description: "Code Master",
     category: "powerful",
     badge: "Best for Code"
   },
   {
     id: "nvidia/nemotron-3-nano-30b-a3b:free",
     name: "Nemotron 30B",
-    description: "Fast NVIDIA model with strong performance",
+    description: "Quick & Smart",
     category: "fast",
     badge: "Recommended"
   },
