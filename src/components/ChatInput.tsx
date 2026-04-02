@@ -41,8 +41,8 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
     if (showModelMenu && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       setMenuPos({
-        top: rect.top - 8,
-        left: rect.left,
+        top: rect.top,
+        left: rect.right + 8,
       });
     }
   }, [showModelMenu]);
@@ -98,7 +98,7 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
             <div 
               ref={menuRef}
               className="fixed w-64 rounded-xl border border-border bg-surface shadow-2xl z-50 py-1.5 animate-fade-in max-h-[400px] overflow-y-auto"
-              style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px` }}
+              style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, transform: 'translateY(-50%)' }}
             >
               {models.map(m => (
                 <button
