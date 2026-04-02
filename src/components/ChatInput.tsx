@@ -12,7 +12,9 @@ interface ChatInputProps {
 export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChange }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const currentModel = models.find(m => m.id === selectedModel) ?? models[0];
@@ -26,13 +28,24 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
         setShowModelMenu(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    if (showModelMenu && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.top - 8,
+        left: rect.left,
+      });
+    }
+  }, [showModelMenu]);
 
   const handleSubmit = () => {
     if (input.trim() && !disabled) {
@@ -69,8 +82,9 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
       {/* Bottom bar */}
       <div className="flex items-center justify-between px-3 pb-3">
         {/* Model selector */}
-        <div className="relative" ref={menuRef}>
+        <div>
           <button
+            ref={buttonRef}
             type="button"
             onClick={() => setShowModelMenu(v => !v)}
             data-testid="button-model-selector"
@@ -81,7 +95,11 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
           </button>
 
           {showModelMenu && (
-            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-border bg-surface shadow-2xl z-50 py-1.5 animate-fade-in">
+            <div 
+              ref={menuRef}
+              className="fixed w-64 rounded-xl border border-border bg-surface shadow-2xl z-50 py-1.5 animate-fade-in max-h-[400px] overflow-y-auto"
+              style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px` }}
+            >
               {models.map(m => (
                 <button
                   key={m.id}
