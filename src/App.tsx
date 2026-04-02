@@ -377,9 +377,16 @@ function App() {
         </header>
 
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto pt-14">
-          {messages.length > 0 && (
-            <div className="max-w-3xl mx-auto w-full py-6 space-y-1 px-4">
+        <div className="flex-1 overflow-y-auto pt-14 px-3 sm:px-4">
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center">
+              <div className="text-center">
+                <h1 className="font-mono font-bold text-2xl sm:text-3xl tracking-tight text-text-primary mb-2">AI Chat</h1>
+                <p className="text-xs sm:text-sm text-text-muted">Type a message to get started</p>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-3xl mx-auto w-full py-6 space-y-1">
               {messages.map(message => (
                 <ChatMessage
                   key={message.id}
@@ -394,15 +401,9 @@ function App() {
           )}
         </div>
 
-        {/* Input area — centered on page */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none py-4 sm:py-0">
-          <div className="w-full max-w-md sm:max-w-2xl lg:max-w-3xl px-3 sm:px-4 pointer-events-auto">
-            {messages.length === 0 && (
-              <div className="text-center mb-8 sm:mb-10">
-                <h1 className="font-mono font-bold text-2xl sm:text-3xl tracking-tight text-text-primary mb-2">AI Chat</h1>
-                <p className="text-xs sm:text-sm text-text-muted">Type a message to get started</p>
-              </div>
-            )}
+        {/* Input area — bottom */}
+        <div className="flex-shrink-0 px-3 sm:px-4 py-4 border-t border-border">
+          <div className="w-full max-w-md sm:max-w-2xl lg:max-w-3xl mx-auto">
             <ChatInput
               onSendMessage={handleSendMessage}
               disabled={isLoading}
