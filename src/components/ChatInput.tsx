@@ -104,33 +104,31 @@ export function ChatInput({ onSendMessage, disabled, selectedModel, onModelChang
               style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, transform: 'translateY(-50%)', width: '280px' }}
             >
               {/* Category tabs */}
-              <div className="flex gap-1 p-2 border-b border-border flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory(null)}
-                  className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    selectedCategory === null
-                      ? 'bg-accent text-white'
-                      : 'bg-surface-2 text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  All
-                </button>
-                {categories.map(cat => (
+              {selectedCategory === null ? (
+                <div className="flex gap-1 p-3 flex-wrap justify-center">
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat)}
+                      className="px-3 py-2 rounded-lg text-xs font-medium bg-surface-2 text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors"
+                    >
+                      {categoryLabels[cat]}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2 border-b border-border">
+                  <span className="text-xs font-medium text-text-muted">{categoryLabels[selectedCategory]}</span>
                   <button
-                    key={cat}
                     type="button"
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-                      selectedCategory === cat
-                        ? 'bg-accent text-white'
-                        : 'bg-surface-2 text-text-secondary hover:text-text-primary'
-                    }`}
+                    onClick={() => setSelectedCategory(null)}
+                    className="text-xs text-text-secondary hover:text-text-primary transition-colors"
                   >
-                    {categoryLabels[cat]}
+                    ← Back
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
 
               {/* Model list */}
               <div className="max-h-[300px] overflow-y-auto py-1.5">
