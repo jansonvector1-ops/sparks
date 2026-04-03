@@ -376,45 +376,59 @@ function App() {
           </button>
         </header>
 
-        {/* Messages area */}
-        <div className="flex-1 overflow-y-auto pt-14">
-          {messages.length > 0 && (
-            <div className="max-w-3xl mx-auto w-full py-6 space-y-1 px-4">
-              {messages.map(message => (
-                <ChatMessage
-                  key={message.id}
-                  role={message.role}
-                  content={message.content}
-                  messageId={message.id}
-                  onDelete={deleteMessageItem}
-                />
-              ))}
-              <div ref={messagesEndRef} className="h-4" />
-            </div>
-          )}
-        </div>
-
-        {/* Input area — centered on page */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none py-4 sm:py-0">
-          <div className="w-full max-w-md sm:max-w-2xl lg:max-w-3xl px-3 sm:px-4 pointer-events-auto">
-            {messages.length === 0 && (
+        {messages.length === 0 ? (
+          /* ── Empty state: input centered ─────────────────────────────── */
+          <div className="flex-1 flex items-center justify-center px-3 sm:px-4 pt-14 pb-4">
+            <div className="w-full max-w-md sm:max-w-2xl lg:max-w-3xl">
               <div className="text-center mb-8 sm:mb-10">
                 <h1 className="font-mono font-bold text-2xl sm:text-3xl tracking-tight text-text-primary mb-2">AI Chat</h1>
                 <p className="text-xs sm:text-sm text-text-muted">Type a message to get started</p>
               </div>
-            )}
-            <ChatInput
-              onSendMessage={handleSendMessage}
-              disabled={isLoading}
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-            />
-            <p className="text-center text-[10px] sm:text-[11px] text-text-muted mt-2">
-              <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send</span>
-              <span className="sm:hidden">Tap send button</span>
-            </p>
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                disabled={isLoading}
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+              />
+              <p className="text-center text-[10px] sm:text-[11px] text-text-muted mt-2">
+                <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send</span>
+                <span className="sm:hidden">Tap send button</span>
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* ── Messages + bottom input ──────────────────────────────────── */
+          <>
+            <div className="flex-1 overflow-y-auto pt-14 pb-2">
+              <div className="max-w-3xl mx-auto w-full py-6 space-y-1 px-4">
+                {messages.map(message => (
+                  <ChatMessage
+                    key={message.id}
+                    role={message.role}
+                    content={message.content}
+                    messageId={message.id}
+                    onDelete={deleteMessageItem}
+                  />
+                ))}
+                <div ref={messagesEndRef} className="h-4" />
+              </div>
+            </div>
+            <div className="flex-shrink-0 border-t border-border bg-surface px-3 sm:px-4 py-3">
+              <div className="max-w-md sm:max-w-2xl lg:max-w-3xl mx-auto">
+                <ChatInput
+                  onSendMessage={handleSendMessage}
+                  disabled={isLoading}
+                  selectedModel={selectedModel}
+                  onModelChange={setSelectedModel}
+                />
+                <p className="text-center text-[10px] sm:text-[11px] text-text-muted mt-2">
+                  <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send</span>
+                  <span className="sm:hidden">Tap send button</span>
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Settings modal ───────────────────────────────────────────────── */}
