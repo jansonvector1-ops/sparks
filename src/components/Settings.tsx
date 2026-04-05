@@ -3,6 +3,7 @@ import { X, Settings as SettingsIcon, Monitor, Sliders, AlertTriangle, ArrowDown
 
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark';
+  language: 'auto' | 'english' | 'tamil' | 'hindi';
   systemPrompt: string;
   fontSize: 'sm' | 'base' | 'lg';
   temperature: number;
@@ -14,6 +15,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
+  language: 'auto',
   systemPrompt: '',
   fontSize: 'base',
   temperature: 0.8,
@@ -138,6 +140,20 @@ export function Settings({ settings, onSave, onClose, onExport, onClearHistory }
                     <option value="dark">Dark</option>
                   </select>
                   <p className="text-xs text-text-muted">Choose between System (follows your device), Light, or Dark.</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-text-primary">Response Language</label>
+                  <select
+                    value={draft.language}
+                    onChange={e => update('language', e.target.value as AppSettings['language'])}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-surface-3 text-sm text-text-primary focus:outline-none focus:border-accent/50"
+                  >
+                    <option value="auto">Auto (model decides)</option>
+                    <option value="english">English</option>
+                    <option value="tamil">Tamil — தமிழ்</option>
+                    <option value="hindi">Hindi — हिन्दी</option>
+                  </select>
+                  <p className="text-xs text-text-muted">Prepends a language instruction to every API call.</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-primary">System Prompt</label>

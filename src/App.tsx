@@ -6,6 +6,7 @@ import {
   type Message, type Conversation,
 } from './lib/api';
 import { models } from './lib/models';
+import { useModels } from './lib/useModels';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { Settings, DEFAULT_SETTINGS, type AppSettings } from './components/Settings';
@@ -24,6 +25,9 @@ function App() {
     } catch { return DEFAULT_SETTINGS; }
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Free models (for ChatInput dropdown)
+  const { models: freeModels } = useModels();
 
   // View state
   const [view, setView] = useState<'models' | 'chat'>('models');
@@ -189,9 +193,13 @@ function App() {
     const assistantId = crypto.randomUUID();
     setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
 
-    // Build message history with optional system prompt
+    // Build message history with optional system prompt + language instruction
     const msgHistory = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
-    if (settings.systemPrompt) msgHistory.unshift({ role: 'system', content: settings.systemPrompt });
+    const langMap: Record<string, string> = { english: 'English', tamil: 'Tamil', hindi: 'Hindi' };
+    const langInstruction = settings.language && settings.language !== 'auto'
+      ? `Respond only in ${langMap[settings.language]}.` : '';
+    const sysContent = [langInstruction, settings.systemPrompt].filter(Boolean).join('\n');
+    if (sysContent) msgHistory.unshift({ role: 'system', content: sysContent });
 
     // Try models in order — skip silently on 429 rate-limit
     const modelQueue = [
@@ -433,6 +441,8 @@ function App() {
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
                 contextWindow={contextWindow}
+                freeModels={freeModels}
+                language={settings.language}
               />
               <p className="text-center text-[10px] sm:text-[11px] text-text-muted mt-2">
                 <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send</span>
@@ -465,6 +475,8 @@ function App() {
                   selectedModel={selectedModel}
                   onModelChange={setSelectedModel}
                   contextWindow={contextWindow}
+                  freeModels={freeModels}
+                  language={settings.language}
                 />
                 <p className="text-center text-[10px] sm:text-[11px] text-text-muted mt-2">
                   <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send</span>

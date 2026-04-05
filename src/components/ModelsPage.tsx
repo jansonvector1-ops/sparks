@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { MessageSquare, RefreshCw, Cpu } from 'lucide-react';
 import { useModels } from '../lib/useModels';
 import type { FreeModel } from '../lib/api';
+import { cleanModelName, isTamilModel } from '../lib/models';
 
 interface ModelsPageProps {
   onChatWithModel: (modelId: string, contextLength: number) => void;
@@ -90,12 +91,12 @@ export function ModelsPage({ onChatWithModel }: ModelsPageProps) {
         )}
 
         {/* Category tabs */}
-        <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1 flex-wrap">
+        <div className="flex gap-1 mb-5 overflow-x-auto pb-1 flex-nowrap">
           {CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium flex-shrink-0 transition-colors ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium flex-shrink-0 transition-colors ${
                 activeCategory === cat
                   ? 'bg-accent text-white'
                   : 'bg-surface-2 text-text-secondary hover:text-text-primary border border-border'
@@ -151,9 +152,16 @@ export function ModelsPage({ onChatWithModel }: ModelsPageProps) {
 
                 {/* Name */}
                 <div>
-                  <h3 className="text-sm font-semibold text-text-primary leading-snug line-clamp-2">
-                    {model.name}
-                  </h3>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h3 className="text-sm font-semibold text-text-primary leading-snug">
+                      {cleanModelName(model.name)}
+                    </h3>
+                    {isTamilModel(model.id) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-orange-500/15 text-orange-400 font-medium flex-shrink-0">
+                        தமிழ்
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-text-muted mt-0.5 font-mono truncate">{model.id}</p>
                 </div>
 
