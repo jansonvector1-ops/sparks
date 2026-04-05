@@ -101,6 +101,32 @@ app.delete("/api/messages/:id", async (req, res) => {
   }
 });
 
+// --- Free Models from OpenRouter ---
+
+app.get("/api/models", async (_req, res) => {
+  try {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      res.status(500).json({ error: "OpenRouter API key not configured" });
+      return;
+    }
+    const response = await fetch("https://openrouter.ai/api/v1/models", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!response.ok) {
+      res.status(response.status).json({ error: "Failed to fetch models from OpenRouter" });
+      return;
+    }
+    const data: any = await response.json();
+    const free = (data.data ?? []).filter(
+      (m: any) => m.pricing?.prompt === "0" && m.pricing?.completion === "0"
+    );
+    res.json(free);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- AI Chat (proxy to OpenRouter) ---
 
 app.post("/api/chat", async (req, res) => {

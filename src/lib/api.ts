@@ -75,6 +75,21 @@ export async function deleteMessage(id: string): Promise<void> {
   if (!res.ok) throw new Error('Failed to delete message');
 }
 
+// --- Free Models ---
+
+export interface FreeModel {
+  id: string;
+  name: string;
+  context_length: number;
+  pricing: { prompt: string; completion: string };
+}
+
+export async function fetchFreeModels(): Promise<FreeModel[]> {
+  const res = await fetch('/api/models');
+  if (!res.ok) throw new Error('Failed to fetch models');
+  return res.json();
+}
+
 // --- AI Chat ---
 
 export async function streamChat(

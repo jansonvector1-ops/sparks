@@ -7,6 +7,7 @@ interface ChatInputProps {
   disabled: boolean;
   selectedModel: string;
   onModelChange: (modelId: string) => void;
+  contextWindow?: number;
 }
 
 export function ChatInput({
@@ -14,6 +15,7 @@ export function ChatInput({
   disabled,
   selectedModel,
   onModelChange,
+  contextWindow,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const [showModelMenu, setShowModelMenu] = useState(false);
@@ -191,6 +193,13 @@ export function ChatInput({
             </div>
           )}
         </div>
+
+        {/* Context window */}
+        {contextWindow && (
+          <span className="text-[10px] text-text-muted hidden sm:block flex-shrink-0">
+            {contextWindow.toLocaleString()} ctx tokens
+          </span>
+        )}
 
         {/* Send / Stop */}
         <button

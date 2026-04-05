@@ -9,9 +9,10 @@ import { models } from './lib/models';
 import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { Settings, DEFAULT_SETTINGS, type AppSettings } from './components/Settings';
+import { ModelsPage } from './components/ModelsPage';
 import {
   SquarePen, Search, MessageSquare, Trash2, PenLine, Settings as SettingsIcon,
-  PanelLeft, X
+  PanelLeft, X, LayoutGrid,
 } from 'lucide-react';
 
 function App() {
@@ -24,8 +25,12 @@ function App() {
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // View state
+  const [view, setView] = useState<'models' | 'chat'>('models');
+
   // Chat state
   const [selectedModel, setSelectedModel] = useState(models[0].id);
+  const [contextWindow, setContextWindow] = useState<number | undefined>(undefined);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentConversation, setCurrentConversation] = useState<string | null>(null);
@@ -75,9 +80,9 @@ function App() {
       const data = await fetchMessages(id);
       setMessages(data);
       setCurrentConversation(id);
+      setView('chat');
       const conv = conversations.find(c => c.id === id);
       if (conv) setSelectedModel(conv.model);
-      // Auto-hide sidebar on mobile when viewing a chat
       if (window.innerWidth < 768) {
         setShowSidebar(false);
       }
@@ -87,10 +92,19 @@ function App() {
   const startNewChat = () => {
     setMessages([]);
     setCurrentConversation(null);
-    // Show sidebar on mobile when starting new chat
+    setView('chat');
     if (window.innerWidth < 768) {
       setShowSidebar(true);
     }
+  };
+
+  const handleChatWithModel = (modelId: string, ctxLength: number) => {
+    setSelectedModel(modelId);
+    setContextWindow(ctxLength);
+    setMessages([]);
+    setCurrentConversation(null);
+    setView('chat');
+    if (window.innerWidth < 768) setShowSidebar(false);
   };
 
   const deleteConversation = async (id: string) => {
@@ -263,9 +277,16 @@ function App() {
         {/* Nav items */}
         <div className="px-1.5 sm:px-2 space-y-0.5 flex-shrink-0">
           <button
+            onClick={() => setView('models')}
+            className={`w-full flex items-center gap-2.5 px-2 sm:px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors ${view === 'models' ? 'bg-surface-3 text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-3'}`}
+          >
+            <LayoutGrid size={14} className="flex-shrink-0" />
+            <span className="hidden sm:inline">Models</span>
+          </button>
+          <button
             onClick={startNewChat}
             data-testid="button-new-chat"
-            className="w-full flex items-center gap-2.5 px-2 sm:px-3 py-2 rounded-xl text-xs sm:text-sm text-text-secondary hover:text-text-primary hover:bg-surface-3 transition-colors"
+            className={`w-full flex items-center gap-2.5 px-2 sm:px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors ${view === 'chat' && !currentConversation ? 'bg-surface-3 text-text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-3'}`}
           >
             <SquarePen size={14} className="flex-shrink-0" />
             <span className="hidden sm:inline">New chat</span>
@@ -353,7 +374,7 @@ function App() {
       <div className="flex-1 flex flex-col min-w-0 relative">
 
         {/* Top bar */}
-        <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-3 py-2.5 z-10">
+        <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-3 py-2.5 z-10 bg-surface/80 backdrop-blur-sm">
           <button
             onClick={() => {
               if (currentConversation && window.innerWidth < 768) {
@@ -376,8 +397,13 @@ function App() {
           </button>
         </header>
 
-        {messages.length === 0 ? (
-          /* ── Empty state: input centered ─────────────────────────────── */
+        {/* ── Models view ───────────────────────────────────────────────── */}
+        {view === 'models' ? (
+          <div className="flex-1 flex flex-col pt-12 overflow-hidden">
+            <ModelsPage onChatWithModel={handleChatWithModel} />
+          </div>
+        ) : messages.length === 0 ? (
+          /* ── Chat empty state: input centered ────────────────────────── */
           <div className="flex-1 flex items-center justify-center px-3 sm:px-4 pt-14 pb-4">
             <div className="w-full max-w-md sm:max-w-2xl lg:max-w-3xl">
               <div className="text-center mb-8 sm:mb-10">
@@ -389,6 +415,7 @@ function App() {
                 disabled={isLoading}
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
+                contextWindow={contextWindow}
               />
               <p className="text-center text-[10px] sm:text-[11px] text-text-muted mt-2">
                 <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send</span>
@@ -397,7 +424,7 @@ function App() {
             </div>
           </div>
         ) : (
-          /* ── Messages + bottom input ──────────────────────────────────── */
+          /* ── Chat: messages + bottom input ───────────────────────────── */
           <>
             <div className="flex-1 overflow-y-auto pt-14 pb-2">
               <div className="max-w-3xl mx-auto w-full py-6 space-y-1 px-4">
@@ -420,6 +447,7 @@ function App() {
                   disabled={isLoading}
                   selectedModel={selectedModel}
                   onModelChange={setSelectedModel}
+                  contextWindow={contextWindow}
                 />
                 <p className="text-center text-[10px] sm:text-[11px] text-text-muted mt-2">
                   <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-surface-3 border border-border font-mono text-[10px]">Enter</kbd> to send</span>
