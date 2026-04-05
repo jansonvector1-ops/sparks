@@ -1,0 +1,59 @@
+Enhance the existing AI Chat app with the following features:
+
+---
+
+## 1. MODEL CATEGORIES (Tabs)
+
+Add horizontal tabs above the model grid to filter by category:
+- All | Coding | Chat | Reasoning/Thinking | Vision | Research
+
+Categorize models by keywords in their model ID or name:
+- Coding: contains "coder", "code", "starcoder", "deepseek-coder", "codestral", "qwen2.5-coder"
+- Reasoning/Thinking: contains "thinking", "reason", "r1", "o1", "qwq"
+- Vision: contains "vision", "vl", "visual", "pixtral", "llava"
+- Research: contains "sonar", "search", "perplexity"
+- Chat: everything else
+
+---
+
+## 2. CODE / ARTIFACT LIVE PREVIEW
+
+When model response contains code blocks:
+- Detect language: html, css, javascript, python, react/jsx
+- Show a split view: left = chat response, right = live preview panel
+- For HTML/CSS/JS/React: render live in an iframe (sandbox)
+- For Python: show syntax-highlighted code + a "Download .py" button
+- For PDF-worthy content (markdown tables, reports): show "Download PDF" button using window.print() or jsPDF
+- Download buttons appear contextually based on detected content type
+
+---
+
+## 3. THINKING PROCESS (Clean Display)
+
+For models with "thinking" in their ID (e.g. deepseek-r1, qwq):
+- If response contains <think>...</think> tags, extract and separate it
+- Show a collapsible "💭 Thinking Process" section ABOVE the final answer
+- Thinking section: subtle background, smaller font, italic style
+- Final answer: normal chat bubble style
+- Collapsed by default, expandable on click
+
+---
+
+## 4. LOCALHOST PERMANENT ACCESS
+
+- In server/index.js (or main server file), change the listen line to:
+  app.listen(PORT, '0.0.0.0', ...)
+- This makes the app accessible on local network via http://YOUR_LOCAL_IP:PORT
+- Add a small "📋 Copy Local URL" button in the app header/settings that copies the LAN URL
+
+---
+
+## 5. CHAT HISTORY PERSISTENCE
+
+- Save all chats to localStorage so they persist after browser refresh
+- Sidebar shows previous chat sessions with model name + first message preview
+- "New Chat" button starts a fresh session
+
+---
+
+Keep all existing features intact. Make changes modular and clean.

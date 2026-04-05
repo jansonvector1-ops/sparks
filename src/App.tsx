@@ -12,7 +12,7 @@ import { Settings, DEFAULT_SETTINGS, type AppSettings } from './components/Setti
 import { ModelsPage } from './components/ModelsPage';
 import {
   SquarePen, Search, MessageSquare, Trash2, PenLine, Settings as SettingsIcon,
-  PanelLeft, X, LayoutGrid,
+  PanelLeft, X, LayoutGrid, Link, Check as CheckIcon,
 } from 'lucide-react';
 
 function App() {
@@ -27,6 +27,7 @@ function App() {
 
   // View state
   const [view, setView] = useState<'models' | 'chat'>('models');
+  const [urlCopied, setUrlCopied] = useState(false);
 
   // Chat state
   const [selectedModel, setSelectedModel] = useState(models[0].id);
@@ -96,6 +97,12 @@ function App() {
     if (window.innerWidth < 768) {
       setShowSidebar(true);
     }
+  };
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(window.location.origin);
+    setUrlCopied(true);
+    setTimeout(() => setUrlCopied(false), 2000);
   };
 
   const handleChatWithModel = (modelId: string, ctxLength: number) => {
@@ -388,13 +395,23 @@ function App() {
           >
             {showSidebar ? <X size={16} /> : <PanelLeft size={16} />}
           </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            data-testid="button-settings"
-            className="w-8 h-8 flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
-          >
-            <SettingsIcon size={16} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleCopyUrl}
+              title="Copy app URL"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+            >
+              {urlCopied ? <CheckIcon size={13} className="text-green-500" /> : <Link size={13} />}
+              <span className="hidden sm:inline text-[11px]">{urlCopied ? 'Copied!' : 'Copy URL'}</span>
+            </button>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              data-testid="button-settings"
+              className="w-8 h-8 flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+            >
+              <SettingsIcon size={16} />
+            </button>
+          </div>
         </header>
 
         {/* ── Models view ───────────────────────────────────────────────── */}

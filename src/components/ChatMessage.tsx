@@ -1,11 +1,42 @@
-import { Bot, User, Copy, Check, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Bot, User, Copy, Check, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { CodePreviewPanel, InlinePreviewActions, isPreviewable, isPython } from './CodePreview';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
   content: string;
   messageId?: string;
   onDelete?: (id: string) => void;
+}
+
+interface CodeBlock {
+  lang: string;
+  code: string;
+}
+
+function extractThinking(raw: string): { thinking: string; answer: string } {
+  const match = raw.match(/<think>([\s\S]*?)<\/think>/i);
+  if (match) {
+    return {
+      thinking: match[1].trim(),
+      answer: raw.replace(/<think>[\s\S]*?<\/think>/i, '').trim(),
+    };
+  }
+  return { thinking: '', answer: raw };
+}
+
+function extractCodeBlocks(text: string): CodeBlock[] {
+  const blocks: CodeBlock[] = [];
+  const regex = /```(\w*)\n?([\s\S]*?)```/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    blocks.push({ lang: (match[1] ?? '').toLowerCase(), code: match[2]?.trim() ?? '' });
+  }
+  return blocks;
+}
+
+function hasMarkdownTable(text: string): boolean {
+  return /\|.+\|/.test(text) && /\|-+\|/.test(text);
 }
 
 function parseMarkdown(text: string): string {
@@ -33,6 +64,18 @@ function parseMarkdown(text: string): string {
 export function ChatMessage({ role, content, messageId, onDelete }: ChatMessageProps) {
   const isUser = role === 'user';
   const [copied, setCopied] = useState(false);
+  const [thinkingOpen, setThinkingOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const { thinking, answer } = useMemo(() => extractThinking(content), [content]);
+  const displayContent = answer || content;
+  const codeBlocks = useMemo(() => extractCodeBlocks(displayContent), [displayContent]);
+  const previewableBlocks = useMemo(
+    () => codeBlocks.filter(b => isPreviewable(b.lang) || isPython(b.lang)),
+    [codeBlocks]
+  );
+  const hasTable = useMemo(() => hasMarkdownTable(displayContent), [displayContent]);
+  const showActions = previewableBlocks.length > 0 || hasTable;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
@@ -75,43 +118,91 @@ export function ChatMessage({ role, content, messageId, onDelete }: ChatMessageP
   }
 
   return (
-    <div className="flex gap-3 px-4 py-2 animate-fade-in group">
-      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-surface-3 border border-border flex items-center justify-center mt-0.5">
-        <Bot size={14} className="text-accent" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className={`text-sm text-text-primary prose-message ${!content ? 'flex items-center gap-1' : ''}`}>
-          {!content ? (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: '300ms' }} />
-            </>
-          ) : (
-            <div dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }} />
-          )}
+    <>
+      <div className="flex gap-3 px-4 py-2 animate-fade-in group">
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-surface-3 border border-border flex items-center justify-center mt-0.5">
+          <Bot size={14} className="text-accent" />
         </div>
-        {content && (
-          <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={handleCopy}
-              className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors"
-            >
-              {copied ? <Check size={12} /> : <Copy size={12} />}
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-            {messageId && onDelete && (
+
+        <div className="flex-1 min-w-0">
+          {/* ── Thinking section ─────────────────────────────────────── */}
+          {thinking && (
+            <div className="mb-3 rounded-xl border border-border bg-surface-2 overflow-hidden">
               <button
-                onClick={() => onDelete(messageId)}
-                className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                onClick={() => setThinkingOpen(v => !v)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs text-text-muted hover:text-text-secondary transition-colors"
               >
-                <Trash2 size={12} />
-                Delete
+                <span className="flex items-center gap-1.5">
+                  <span>💭</span>
+                  <span className="font-medium">Thinking process</span>
+                </span>
+                {thinkingOpen
+                  ? <ChevronUp size={12} />
+                  : <ChevronDown size={12} />}
               </button>
+              {thinkingOpen && (
+                <div className="px-3 pb-3 border-t border-border">
+                  <p className="text-xs text-text-muted italic leading-relaxed whitespace-pre-wrap mt-2">
+                    {thinking}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Main answer ──────────────────────────────────────────── */}
+          <div className={`text-sm text-text-primary prose-message ${!displayContent ? 'flex items-center gap-1' : ''}`}>
+            {!displayContent ? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: '300ms' }} />
+              </>
+            ) : (
+              <div dangerouslySetInnerHTML={{ __html: parseMarkdown(displayContent) }} />
             )}
           </div>
-        )}
+
+          {/* ── Preview / download actions ────────────────────────────── */}
+          {displayContent && showActions && (
+            <InlinePreviewActions
+              blocks={previewableBlocks}
+              hasTable={hasTable}
+              onPreview={() => setPreviewOpen(true)}
+            />
+          )}
+
+          {/* ── Message actions ──────────────────────────────────────── */}
+          {displayContent && (
+            <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-colors"
+              >
+                {copied ? <Check size={12} /> : <Copy size={12} />}
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+              {messageId && onDelete && (
+                <button
+                  onClick={() => onDelete(messageId)}
+                  className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                >
+                  <Trash2 size={12} />
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* ── Live preview side panel ───────────────────────────────────── */}
+      {previewOpen && previewableBlocks.length > 0 && (
+        <CodePreviewPanel
+          blocks={previewableBlocks}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
+    </>
   );
 }
