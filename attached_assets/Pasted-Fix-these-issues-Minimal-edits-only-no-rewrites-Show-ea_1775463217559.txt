@@ -1,0 +1,56 @@
+Fix these issues. Minimal edits only, no rewrites. Show each file before editing.
+
+## 1. CODE BLOCK FIXES (CodePreview.tsx or chat message renderer)
+
+a) INDENTATION: Code blocks have too many spaces. Set tab-size:2 and white-space:pre in code element CSS.
+
+b) SCROLLABLE: Long code → add max-height:400px and overflow-y:auto to code block container.
+
+c) COMPACT SIZE: Reduce code block font to text-sm (0.875rem), reduce padding to p-3.
+
+d) SYNTAX COLORS: Add these CSS classes for syntax highlighting using simple regex replace on code text:
+- Keywords (if/else/for/function/return/const/let/var) → color:#c792ea
+- Strings ("..." '...') → color:#c3e88d  
+- Comments (// ...) → color:#546e7a italic
+- Numbers → color:#f78c6c
+- HTML tags → color:#f07178
+- Background of code block → #1e1e2e
+- Default text → #cdd6f4
+
+Apply via dangerouslySetInnerHTML with regex replacements before render.
+
+---
+
+## 2. CLAUDE-STYLE ARTIFACT PANEL (right side panel)
+
+Add a collapsible right panel like Claude's artifact view:
+- Toggle button (top right): "⚡ Artifacts" 
+- Panel shows tabs: 💬 Chat | 🎮 Games | 🎨 Creative | 📁 Projects
+- Games tab: show 4-6 small playable HTML games as cards (tic-tac-toe, snake, memory match) — hardcoded mini HTML games rendered in iframes
+- Creative tab: show fun artifact templates (color picker, clock, calculator) as cards
+- Panel width: 320px on desktop, full screen on mobile
+- Smooth slide-in animation
+
+---
+
+## 3. PROJECTS TAB
+
+Add Projects section in sidebar:
+- "+" button to create new project
+- Each project stores: name, selected model, system prompt, chat history
+- Project chats use the saved system prompt automatically
+- Projects saved in localStorage
+- Click project → loads that model + system prompt + history
+
+---
+
+## 4. CUSTOM MODEL / API KEY TAB
+
+In settings panel (⚙️), add new "Custom Model" section:
+- Input: API Key field (password type, saved to localStorage)
+- Input: Model ID field (e.g. gpt-4o, claude-3-5-sonnet)  
+- Input: Base URL (default: https://openrouter.ai/api/v1)
+- Save button → adds this model to model selector with "⚡ Custom" badge
+- Saved models persist in localStorage
+
+Edit only files that need changing. Show file content before each edit.

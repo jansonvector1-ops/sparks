@@ -37,12 +37,30 @@ function hasMarkdownTable(text: string): boolean {
   return /\|.+\|/.test(text) && /\|-+\|/.test(text);
 }
 
+function highlightCode(raw: string, lang: string): string {
+  let h = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (['html', 'xml', 'jsx', 'tsx'].includes(lang))
+    h = h.replace(/(&lt;\/?[\w][\w:-]*)/g, '<span style="color:#f07178">$1</span>');
+  h = h.replace(/(["'`])([^"'`\n]*?)\1/g, '<span style="color:#c3e88d">$1$2$1</span>');
+  h = h.replace(/(\/\/[^\n]*)/g, '<span style="color:#546e7a;font-style:italic">$1</span>');
+  if (['python', 'py', 'bash', 'sh'].includes(lang))
+    h = h.replace(/(#[^\n]*)/g, '<span style="color:#546e7a;font-style:italic">$1</span>');
+  h = h.replace(/\b(if|else|elif|for|while|function|return|const|let|var|import|export|from|default|class|extends|new|this|typeof|instanceof|try|catch|finally|throw|async|await|def|lambda|print|True|False|None|and|or|not|in|is|pass|break|continue|yield)\b/g,
+    '<span style="color:#c792ea">$1</span>');
+  h = h.replace(/\b(\d+\.?\d*)\b/g, '<span style="color:#f78c6c">$1</span>');
+  return h;
+}
+
 function parseMarkdown(text: string): string {
-  return text
+  const codeBlocks: Array<{lang: string; code: string}> = [];
+  let t = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_m, lang, code) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push({ lang: (lang || '').toLowerCase(), code: code.trim() });
+    return `\x00CB${idx}\x00`;
+  });
+  t = t
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
-      `<pre><code class="language-${lang}">${code.trim()}</code></pre>`)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/`([^`]+)`/g, '<code style="background:#1e1e2e;padding:2px 5px;border-radius:4px;font-size:0.85em;color:#cdd6f4">$1</code>')
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^# (.+)$/gm, '<h1>$1</h1>')
@@ -54,9 +72,14 @@ function parseMarkdown(text: string): string {
     .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
     .replace(/^\s*\d+\. (.+)$/gm, '<li>$1</li>')
     .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hH\d]|<ul|<ol|<li|<pre|<block|<hr)(.+)$/gm, (m) =>
+    .replace(/^(?!<[hH\d]|<ul|<ol|<li|<pre|<block|<hr|\x00)(.+)$/gm, (m) =>
       m.startsWith('<') ? m : `<p>${m}</p>`)
     .replace(/<p><\/p>/g, '');
+  t = t.replace(/\x00CB(\d+)\x00/g, (_m, i) => {
+    const { lang, code } = codeBlocks[+i];
+    return `<pre style="background:#1e1e2e;border-radius:10px;margin:10px 0;max-height:400px;overflow-y:auto"><code class="language-${lang}" style="display:block;padding:12px;font-size:0.875rem;tab-size:2;white-space:pre;color:#cdd6f4;font-family:monospace;line-height:1.6">${highlightCode(code, lang)}</code></pre>`;
+  });
+  return t;
 }
 
 export function ChatMessage({ role, content, messageId, onDelete }: ChatMessageProps) {
