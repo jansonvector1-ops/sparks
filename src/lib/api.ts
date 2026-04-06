@@ -1,15 +1,15 @@
+const API_BASE = import.meta.env.VITE_API_URL ?? '';
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
 }
-
 export interface Conversation {
   id: string;
   title: string;
   model: string;
 }
-
 export interface SamplingSettings {
   temperature: number;
   topP: number;
@@ -18,17 +18,13 @@ export interface SamplingSettings {
   frequencyPenalty: number;
   systemPrompt: string;
 }
-
-// --- Conversations ---
-
 export async function fetchConversations(): Promise<Conversation[]> {
-  const res = await fetch('/api/conversations');
+  const res = await fetch(`${API_BASE}/api/conversations`);
   if (!res.ok) throw new Error('Failed to fetch conversations');
   return res.json();
 }
-
 export async function createConversation(title: string, model: string): Promise<Conversation> {
-  const res = await fetch('/api/conversations', {
+  const res = await fetch(`${API_BASE}/api/conversations`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, model }),
@@ -36,9 +32,8 @@ export async function createConversation(title: string, model: string): Promise<
   if (!res.ok) throw new Error('Failed to create conversation');
   return res.json();
 }
-
 export async function updateConversation(id: string, title: string): Promise<Conversation> {
-  const res = await fetch(`/api/conversations/${id}`, {
+  const res = await fetch(`${API_BASE}/api/conversations/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
@@ -46,22 +41,17 @@ export async function updateConversation(id: string, title: string): Promise<Con
   if (!res.ok) throw new Error('Failed to update conversation');
   return res.json();
 }
-
 export async function deleteConversation(id: string): Promise<void> {
-  const res = await fetch(`/api/conversations/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE}/api/conversations/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete conversation');
 }
-
-// --- Messages ---
-
 export async function fetchMessages(conversationId: string): Promise<Message[]> {
-  const res = await fetch(`/api/conversations/${conversationId}/messages`);
+  const res = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages`);
   if (!res.ok) throw new Error('Failed to fetch messages');
   return res.json();
 }
-
 export async function createMessage(conversationId: string, role: string, content: string): Promise<Message> {
-  const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+  const res = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ role, content }),
@@ -69,35 +59,27 @@ export async function createMessage(conversationId: string, role: string, conten
   if (!res.ok) throw new Error('Failed to save message');
   return res.json();
 }
-
 export async function deleteMessage(id: string): Promise<void> {
-  const res = await fetch(`/api/messages/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE}/api/messages/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete message');
 }
-
-// --- Free Models ---
-
 export interface FreeModel {
   id: string;
   name: string;
   context_length: number;
   pricing: { prompt: string; completion: string };
 }
-
 export async function fetchFreeModels(): Promise<FreeModel[]> {
-  const res = await fetch('/api/models');
+  const res = await fetch(`${API_BASE}/api/models`);
   if (!res.ok) throw new Error('Failed to fetch models');
   return res.json();
 }
-
-// --- AI Chat ---
-
 export async function streamChat(
   model: string,
   chatMessages: { role: string; content: string }[],
   sampling?: Partial<SamplingSettings>,
 ): Promise<ReadableStream<Uint8Array>> {
-  const res = await fetch('/api/chat', {
+  const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
