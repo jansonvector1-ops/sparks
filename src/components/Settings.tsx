@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { X, Settings as SettingsIcon, Monitor, Sliders, AlertTriangle, ArrowDownUp, RotateCcw, Key, Plus, Trash2 } from 'lucide-react';
-import { loadCustomModels, saveCustomModelsToStorage, type CustomModel } from '../lib/projects';
+import { X, Settings as SettingsIcon, Monitor, Sliders, AlertTriangle, ArrowDownUp, RotateCcw } from 'lucide-react';
 
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark';

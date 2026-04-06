@@ -47,7 +47,7 @@ export function getModelBadges(id: string, contextLength?: number): string[] {
   const badges: string[] = [];
   if (/r1|qwq|thinking/.test(s)) badges.push('🧠');
   if (/code|coder/.test(s)) badges.push('💻');
-  if (/[\/-]vl[\/-:]|vision/.test(s)) badges.push('👁️');
+  if (/[/-]vl[/-:]|vision/.test(s)) badges.push('👁️');
   if (/gemma|llama|mistral|qwen|aya|command/.test(s)) badges.push('🇹🇳');
   if (contextLength !== undefined) {
     if (contextLength < 32_000) badges.push('⚡');

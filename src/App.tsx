@@ -77,7 +77,7 @@ function App() {
   useEffect(() => { loadConversations(); }, []);
 
   const loadConversations = async () => {
-    try { setConversations(await fetchConversations()); } catch {}
+    try { setConversations(await fetchConversations()); } catch {} // ignore
   };
 
   const loadConversation = async (id: string) => {
@@ -91,7 +91,7 @@ function App() {
       if (window.innerWidth < 768) {
         setShowSidebar(false);
       }
-    } catch {}
+    } catch {} // ignore
   };
 
   const startNewChat = () => {
@@ -123,7 +123,7 @@ function App() {
       await apiDeleteConversation(id);
       await loadConversations();
       if (currentConversation === id) startNewChat();
-    } catch {}
+    } catch {} // ignore
   };
 
   const renameConversation = async (id: string, title: string) => {

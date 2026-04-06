@@ -13,7 +13,7 @@ type Category = typeof CATEGORIES[number];
 
 function getModelCategory(model: FreeModel): Category {
   const s = (model.id + ' ' + model.name).toLowerCase();
-  if (/coder|starcoder|codestral|deepseek-coder|qwen2\.5-coder/.test(s)) return 'Coding';
+  if (/coder|starcoder|codestral|deepseek-coder|qwen2[.]5-coder/.test(s)) return 'Coding';
   if (/thinking|reasoning|deepseek-r1|\/r1[:-]|qwq|\/o1[:-]/.test(s)) return 'Reasoning';
   if (/vision|[\/-]vl[:\-\/]|visual|pixtral|llava/.test(s)) return 'Vision';
   if (/sonar|search|perplexity/.test(s)) return 'Research';

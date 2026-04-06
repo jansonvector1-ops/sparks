@@ -23,8 +23,8 @@ app.get("/api/conversations", async (_req, res) => {
       .orderBy(desc(conversations.updatedAt))
       .limit(10);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 

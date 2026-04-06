@@ -56,7 +56,7 @@ function parseMarkdown(text: string): string {
   let t = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_m, lang, code) => {
     const idx = codeBlocks.length;
     codeBlocks.push({ lang: (lang || '').toLowerCase(), code: code.trim() });
-    return `\x00CB${idx}\x00`;
+    return `{{CODE_BLOCK_${idx}}}`;
   });
   t = t
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -64,7 +64,7 @@ function parseMarkdown(text: string): string {
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/^\> (.+)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
     .replace(/^---$/gm, '<hr>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
@@ -72,10 +72,10 @@ function parseMarkdown(text: string): string {
     .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
     .replace(/^\s*\d+\. (.+)$/gm, '<li>$1</li>')
     .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[hH\d]|<ul|<ol|<li|<pre|<block|<hr|\x00)(.+)$/gm, (m) =>
+    .replace(/^(?!<[hH\d]|<ul|<ol|<li|<pre|<block|<hr|{{CODE_BLOCK_)(.+)$/gm, (m) =>
       m.startsWith('<') ? m : `<p>${m}</p>`)
     .replace(/<p><\/p>/g, '');
-  t = t.replace(/\x00CB(\d+)\x00/g, (_m, i) => {
+  t = t.replace(/{{CODE_BLOCK_(\d+)}}/g, (_m, i) => {
     const { lang, code } = codeBlocks[+i];
     return `<pre style="background:#1e1e2e;border-radius:10px;margin:10px 0;max-height:400px;overflow-y:auto"><code class="language-${lang}" style="display:block;padding:12px;font-size:0.875rem;tab-size:2;white-space:pre;color:#cdd6f4;font-family:monospace;line-height:1.6">${highlightCode(code, lang)}</code></pre>`;
   });

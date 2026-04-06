@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check, Zap, Scale, Flame, Sparkles, Eye } from 'lucide-react';
-import { models, categoryLabels, type Model } from '../lib/models';
+import { models, type Model } from '../lib/models';
 
 interface ModelSelectorProps {
   selectedModel: string;

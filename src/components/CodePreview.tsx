@@ -41,14 +41,14 @@ h1,h2,h3{color:#4f46e5}
         const origLog = console.log;
         console.log = (...args) => { log(...args); origLog(...args); };
         try { ${code} } catch(e) { log('Error: ' + e.message); }
-      <\/script>
+      </script>
     </body></html>`;
   }
   if (lang === 'jsx' || lang === 'tsx' || lang === 'react') {
     return `<!DOCTYPE html><html><head>${base}
-      <script src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
-      <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
-      <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+      <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+      <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+      <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     </head><body>
       <div id="root" style="padding:16px"></div>
       <script type="text/babel">
@@ -59,7 +59,7 @@ h1,h2,h3{color:#4f46e5}
         } else if (typeof default_1 !== 'undefined') {
           ReactDOM.createRoot(rootEl).render(React.createElement(default_1));
         }
-      <\/script>
+      </script>
     </body></html>`;
   }
   return '';
