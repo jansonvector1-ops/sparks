@@ -140,7 +140,7 @@ export function CodePreviewPanel({ blocks, onClose }: CodePreviewPanelProps) {
 
       {/* Preview area */}
       <div className="flex-1 overflow-hidden">
-        {isPreviewable(lang) && previewHtml ? (
+        {blocks.some(b => isPreviewable(b.lang)) ? (
           <iframe
             srcDoc={previewHtml}
             sandbox="allow-scripts allow-same-origin"

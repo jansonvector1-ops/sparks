@@ -15,14 +15,12 @@ interface CodeBlock {
 }
 
 function extractThinking(raw: string): { thinking: string; answer: string } {
-  const match = raw.match(/<think>([\s\S]*?)<\/think>/i);
-  if (match) {
-    return {
-      thinking: match[1].trim(),
-      answer: raw.replace(/<think>[\s\S]*?<\/think>/i, '').trim(),
-    };
-  }
-  return { thinking: '', answer: raw };
+  const matches: string[] = [];
+  const cleaned = raw.replace(/<(think|thinking)>([\s\S]*?)<\/\1>/gi, (_, _tag, content) => {
+    matches.push(content.trim());
+    return '';
+  });
+  return { thinking: matches.join('\n\n').trim(), answer: cleaned.trim() };
 }
 
 function extractCodeBlocks(text: string): CodeBlock[] {
@@ -134,7 +132,7 @@ export function ChatMessage({ role, content, messageId, onDelete }: ChatMessageP
               >
                 <span className="flex items-center gap-1.5">
                   <span>💭</span>
-                  <span className="font-medium">Thinking process</span>
+                  <span className="font-medium">Thinking</span>
                 </span>
                 {thinkingOpen
                   ? <ChevronUp size={12} />
