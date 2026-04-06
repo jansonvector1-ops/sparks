@@ -22,7 +22,10 @@ function App() {
     try {
       const saved = localStorage.getItem('ai-chat-settings');
       return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
-    } catch { return DEFAULT_SETTINGS; }
+    } catch (error: unknown) {
+      console.warn('Failed to load saved settings', error);
+      return DEFAULT_SETTINGS;
+    }
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -77,9 +80,11 @@ function App() {
   useEffect(() => { loadConversations(); }, []);
 
   const loadConversations = async () => {
-    try { setConversations(await fetchConversations()); } catch {
-      // ignore errors on initial load
-    } // ignore
+    try {
+      setConversations(await fetchConversations());
+    } catch (error: unknown) {
+      console.warn('Failed to load conversations', error);
+    }
   };
 
   const loadConversation = async (id: string) => {
@@ -93,9 +98,9 @@ function App() {
       if (window.innerWidth < 768) {
         setShowSidebar(false);
       }
-    } catch {
-      // ignore conversation load errors
-    } // ignore
+    } catch (error: unknown) {
+      console.warn('Failed to load conversation', error);
+    }
   };
 
   const startNewChat = () => {
@@ -127,8 +132,8 @@ function App() {
       await apiDeleteConversation(id);
       await loadConversations();
       if (currentConversation === id) startNewChat();
-    } catch {
-      // ignore
+    } catch (error: unknown) {
+      console.warn('Failed to delete conversation', error);
     }
   };
 
@@ -138,16 +143,18 @@ function App() {
       await updateConversation(id, title);
       await loadConversations();
       setRenamingId(null);
-    } catch {
-      // ignore rename errors
+    } catch (error: unknown) {
+      console.warn('Failed to rename conversation', error);
     }
   };
 
   const deleteMessageItem = async (messageId: string) => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
     if (currentConversation) {
-      try { await apiDeleteMessage(messageId); } catch {
-        // ignore message delete errors
+      try {
+        await apiDeleteMessage(messageId);
+      } catch (error: unknown) {
+        console.warn('Failed to delete message', error);
       }
     }
   };
@@ -194,14 +201,19 @@ function App() {
         conversationId = newConv.id;
         setCurrentConversation(conversationId);
         await loadConversations();
-      } catch { return; }
+      } catch (error: unknown) {
+        console.warn('Failed to create conversation', error);
+        return;
+      }
     }
 
     const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
-    try { await createMessage(conversationId!, 'user', content, userMsg.id); } catch {
-      // ignore
+    try {
+      await createMessage(conversationId!, 'user', content, userMsg.id);
+    } catch (error: unknown) {
+      console.warn('Failed to persist user message', error);
     }
 
     const assistantId = crypto.randomUUID();

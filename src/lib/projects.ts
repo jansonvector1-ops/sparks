@@ -14,7 +14,12 @@ export interface CustomModel {
 }
 
 export function loadProjects(): Project[] {
-  try { return JSON.parse(localStorage.getItem('ai-chat-projects') || '[]'); } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem('ai-chat-projects') || '[]');
+  } catch (error: unknown) {
+    console.warn('Failed to load stored projects', error);
+    return [];
+  }
 }
 
 export function saveProjectsToStorage(projects: Project[]) {
@@ -22,7 +27,12 @@ export function saveProjectsToStorage(projects: Project[]) {
 }
 
 export function loadCustomModels(): CustomModel[] {
-  try { return JSON.parse(localStorage.getItem('ai-chat-custom-models') || '[]'); } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem('ai-chat-custom-models') || '[]');
+  } catch (error: unknown) {
+    console.warn('Failed to load stored custom models', error);
+    return [];
+  }
 }
 
 export function saveCustomModelsToStorage(models: CustomModel[]) {
