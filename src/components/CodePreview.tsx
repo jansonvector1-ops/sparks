@@ -7,7 +7,21 @@ interface CodeBlock {
 }
 
 function buildPreviewHtml(lang: string, code: string): string {
-  const base = `<meta charset="utf-8"><style>body{margin:0;font-family:sans-serif;}</style>`;
+  const defaultStyle = `
+    <style>
+      body { 
+        font-family: 'Segoe UI', sans-serif; 
+        background: #f8f9ff; 
+        color: #1a1a2e; 
+        padding: 24px; 
+        margin: 0;
+      }
+      button { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+      input, select { border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; width: 100%; margin: 4px 0; }
+      h1,h2,h3 { color: #4f46e5; }
+      .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 8px 0; }
+    </style>`;
+  const base = `<meta charset="utf-8">${code.includes('<style') ? '' : defaultStyle}`;
   if (lang === 'html') {
     if (code.includes('<!DOCTYPE') || code.includes('<html')) return code;
     return `<!DOCTYPE html><html><head>${base}</head><body>${code}</body></html>`;
@@ -67,6 +81,16 @@ function downloadPython(code: string) {
   URL.revokeObjectURL(url);
 }
 
+function downloadCode(codeContent: string, filename: string) {
+  const blob = new Blob([codeContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function downloadPDF() {
   window.print();
 }
@@ -89,6 +113,13 @@ export function CodePreviewPanel({ blocks, onClose }: CodePreviewPanelProps) {
   const block = blocks[activeIdx];
   const lang = block?.lang?.toLowerCase() ?? '';
   const previewHtml = isPreviewable(lang) ? buildPreviewHtml(lang, block.code) : '';
+  const downloadName = isPython(lang)
+    ? 'code.py'
+    : lang === 'css'
+    ? 'code.css'
+    : lang === 'json'
+    ? 'code.json'
+    : 'code.html';
 
   return (
     <div className="fixed inset-y-0 right-0 z-40 flex flex-col bg-surface border-l border-border shadow-2xl"
@@ -151,21 +182,30 @@ export function CodePreviewPanel({ blocks, onClose }: CodePreviewPanelProps) {
           <div className="p-4 h-full overflow-y-auto">
             <div className="mb-3 flex items-center gap-2">
               <span className="text-xs text-text-muted">Python — no browser runtime available</span>
-              <button
-                onClick={() => downloadPython(block.code)}
-                className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors"
-              >
-                <Download size={11} />
-                Download .py
-              </button>
             </div>
             <pre className="text-sm text-text-primary bg-surface-2 p-4 rounded-xl overflow-x-auto border border-border font-mono">
               {block.code}
             </pre>
+            <button
+              onClick={() => downloadCode(block.code, downloadName)}
+              className="mt-2 flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-surface-2 text-text-secondary hover:text-text-primary border border-border transition-colors"
+            >
+              <Download size={11} />
+              Download .py
+            </button>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-text-muted text-sm">
-            No preview available for this language.
+          <div className="p-4 h-full overflow-y-auto">
+            <pre className="text-sm text-text-primary bg-surface-2 p-4 rounded-xl overflow-x-auto border border-border font-mono">
+              {block.code}
+            </pre>
+            <button
+              onClick={() => downloadCode(block.code, downloadName)}
+              className="mt-2 flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-surface-2 text-text-secondary hover:text-text-primary border border-border transition-colors"
+            >
+              <Download size={11} />
+              {isPreviewable(lang) ? 'Download .html' : lang === 'json' ? 'Download .json' : 'Download file'}
+            </button>
           </div>
         )}
       </div>
