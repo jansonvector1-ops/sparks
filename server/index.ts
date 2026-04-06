@@ -144,9 +144,7 @@ app.post("/api/chat", async (req, res) => {
       headers: {
         Authorization: `Bearer ${openRouterApiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": process.env.REPLIT_DEV_DOMAIN
-          ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-          : "https://replit.com",
+        "HTTP-Referer": "https://sparks-production-780a.up.railway.app",
         "X-Title": "AI Chat App",
       },
       body: JSON.stringify({
