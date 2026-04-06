@@ -7,24 +7,18 @@ interface CodeBlock {
 }
 
 function buildPreviewHtml(lang: string, code: string): string {
-  const defaultStyle = `
-    <style>
-      body { 
-        font-family: 'Segoe UI', sans-serif; 
-        background: #f8f9ff; 
-        color: #1a1a2e; 
-        padding: 24px; 
-        margin: 0;
-      }
-      button { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-      input, select { border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 6px; width: 100%; margin: 4px 0; }
-      h1,h2,h3 { color: #4f46e5; }
-      .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 8px 0; }
-    </style>`;
-  const base = `<meta charset="utf-8">${code.includes('<style') ? '' : defaultStyle}`;
+  const defaultStyle = `<style>
+body{font-family:'Segoe UI',sans-serif;background:#f8f9ff;color:#1a1a2e;padding:24px;margin:0}
+button{background:#6366f1;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer}
+input,select{border:1px solid #d1d5db;padding:8px 12px;border-radius:6px;width:100%;margin:4px 0}
+h1,h2,h3{color:#4f46e5}
+.card{background:white;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin:8px 0}
+</style>`;
+  const injectedHTML = code.includes('<style>') ? code : defaultStyle + code;
+  const base = `<meta charset="utf-8">`;
   if (lang === 'html') {
-    if (code.includes('<!DOCTYPE') || code.includes('<html')) return code;
-    return `<!DOCTYPE html><html><head>${base}</head><body>${code}</body></html>`;
+    if (code.includes('<!DOCTYPE') || code.includes('<html')) return injectedHTML;
+    return `<!DOCTYPE html><html><head>${base}</head><body>${injectedHTML}</body></html>`;
   }
   if (lang === 'css') {
     return `<!DOCTYPE html><html><head>${base}<style>${code}</style></head><body>
@@ -170,14 +164,32 @@ export function CodePreviewPanel({ blocks, onClose }: CodePreviewPanelProps) {
       )}
 
       {/* Preview area */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {blocks.some(b => isPreviewable(b.lang)) ? (
-          <iframe
-            srcDoc={previewHtml}
-            sandbox="allow-scripts allow-same-origin"
-            className="w-full h-full border-0 bg-white"
-            title="code-preview"
-          />
+          <>
+            <iframe
+              srcDoc={previewHtml}
+              sandbox="allow-scripts allow-same-origin"
+              className="w-full flex-1 border-0 bg-white"
+              title="code-preview"
+            />
+            <div className="flex-shrink-0 px-4 py-2 border-t border-border bg-surface-2">
+              <button
+                onClick={() => {
+                  const blob = new Blob([block.code], { type: 'text/plain' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `code.${lang === 'python' || lang === 'py' ? 'py' : lang === 'css' ? 'css' : 'html'}`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="mt-2 px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+              >
+                ⬇️ Download .{lang === 'python' || lang === 'py' ? 'py' : lang === 'css' ? 'css' : 'html'}
+              </button>
+            </div>
+          </>
         ) : isPython(lang) ? (
           <div className="p-4 h-full overflow-y-auto">
             <div className="mb-3 flex items-center gap-2">
