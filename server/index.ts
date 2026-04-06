@@ -5,7 +5,12 @@ import { eq, desc } from "drizzle-orm";
 
 const app = express();
 app.use(express.json());
-
+app.use((_req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE');
+  next();
+});
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
 // --- Conversations ---
