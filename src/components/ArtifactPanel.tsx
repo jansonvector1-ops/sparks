@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape, @typescript-eslint/no-unused-vars */
 import { useState } from 'react';
 import { X, ChevronLeft, Plus, Trash2, FolderOpen } from 'lucide-react';
 import type { Project } from '../lib/projects';
@@ -8,6 +9,7 @@ const GAMES = [
   {
     title: 'Tic-Tac-Toe',
     emoji: '⭕',
+    // eslint-disable-next-line no-useless-escape
     html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#0f0f1a;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;font-family:sans-serif;color:#fff}.board{display:grid;grid-template-columns:repeat(3,72px);gap:6px;margin:10px 0}.cell{width:72px;height:72px;background:#1a1a2e;border:2px solid #2a2a4a;font-size:1.8em;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:.15s}.cell:hover{background:#252545}#msg{font-size:13px;margin:6px 0}button{padding:6px 16px;background:#6366f1;border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:13px}</style></head><body><h3 style="margin:0 0 4px;font-size:15px">Tic-Tac-Toe</h3><div id="msg">X's turn</div><div class="board" id="b"></div><button onclick="init()">Reset</button><script>let g=Array(9).fill(''),p='X',done=false;const W=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];function render(){document.getElementById('b').innerHTML=g.map((v,i)=>`<div class="cell" onclick="go(${i})">${v}</div>`).join('')}function go(i){if(g[i]||done)return;g[i]=p;let w=W.find(r=>r.every(x=>g[x]===p));if(w){document.getElementById('msg').textContent=p+' wins! 🎉';done=true}else if(g.every(v=>v)){document.getElementById('msg').textContent='Draw!';done=true}else{p=p==='X'?'O':'X';document.getElementById('msg').textContent=p+"'s turn"}render()}function init(){g=Array(9).fill('');p='X';done=false;document.getElementById('msg').textContent="X's turn";render()}init();<\/script></body></html>`,
   },
   {

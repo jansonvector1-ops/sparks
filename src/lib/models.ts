@@ -8,18 +8,25 @@ export interface Model {
 
 export const models: Model[] = [
   {
-    id: "nvidia/nemotron-3-super-120b-a12b:free",
-    name: "Nemotron 120B",
-    description: "Code Master",
+    id: "grok-2-latest",
+    name: "Grok 2",
+    description: "Latest Grok model",
     category: "powerful",
-    badge: "Best for Code"
+    badge: "Recommended"
   },
   {
-    id: "nvidia/nemotron-3-nano-30b-a3b:free",
-    name: "Nemotron 30B",
-    description: "Quick & Smart",
-    category: "fast",
-    badge: "Recommended"
+    id: "meta-llama/llama-3.2-90b-vision-instruct:free",
+    name: "Llama 3.2 90B Vision",
+    description: "Free vision model",
+    category: "vision",
+    badge: "Free"
+  },
+  {
+    id: "meta-llama/llama-3.1-405b-instruct:free",
+    name: "Llama 3.1 405B",
+    description: "Free powerful model",
+    category: "powerful",
+    badge: "Free"
   },
 ];
 

@@ -18,6 +18,11 @@ dist-ssr
 *.suo
 *.ntvs*
 *.njsproj
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
 *.sln
 *.sw?
 .env

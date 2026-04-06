@@ -77,7 +77,9 @@ function App() {
   useEffect(() => { loadConversations(); }, []);
 
   const loadConversations = async () => {
-    try { setConversations(await fetchConversations()); } catch {} // ignore
+    try { setConversations(await fetchConversations()); } catch {
+      // ignore errors on initial load
+    } // ignore
   };
 
   const loadConversation = async (id: string) => {
@@ -91,7 +93,9 @@ function App() {
       if (window.innerWidth < 768) {
         setShowSidebar(false);
       }
-    } catch {} // ignore
+    } catch {
+      // ignore conversation load errors
+    } // ignore
   };
 
   const startNewChat = () => {
@@ -123,7 +127,9 @@ function App() {
       await apiDeleteConversation(id);
       await loadConversations();
       if (currentConversation === id) startNewChat();
-    } catch {} // ignore
+    } catch {
+      // ignore
+    }
   };
 
   const renameConversation = async (id: string, title: string) => {
@@ -132,13 +138,17 @@ function App() {
       await updateConversation(id, title);
       await loadConversations();
       setRenamingId(null);
-    } catch {}
+    } catch {
+      // ignore rename errors
+    }
   };
 
   const deleteMessageItem = async (messageId: string) => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
     if (currentConversation) {
-      try { await apiDeleteMessage(messageId); } catch {}
+      try { await apiDeleteMessage(messageId); } catch {
+        // ignore message delete errors
+      }
     }
   };
 
@@ -159,7 +169,9 @@ function App() {
   const clearAllHistory = async () => {
     if (!confirm('Delete all conversations? This cannot be undone.')) return;
     for (const c of conversations) {
-      try { await apiDeleteConversation(c.id); } catch {}
+      try { await apiDeleteConversation(c.id); } catch {
+        // ignore individual conversation delete errors
+      }
     }
     setConversations([]);
     startNewChat();
@@ -188,7 +200,9 @@ function App() {
     const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
-    try { await createMessage(conversationId!, 'user', content); } catch {}
+    try { await createMessage(conversationId!, 'user', content, userMsg.id); } catch {
+      // ignore
+    }
 
     const assistantId = crypto.randomUUID();
     setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
@@ -241,23 +255,25 @@ function App() {
                   m.id === assistantId ? { ...m, content: fullResponse } : m
                 ));
               }
-            } catch {}
+            } catch {
+              // ignore JSON parsing errors
+            }
           }
         }
 
         usedModel = modelId;
         if (conversationId && fullResponse) {
-          await createMessage(conversationId, 'assistant', fullResponse);
+          await createMessage(conversationId, 'assistant', fullResponse, assistantId);
         }
         break; // success — stop trying
 
-      } catch (err: any) {
-        if ((err as any).statusCode === 429 && i < modelQueue.length - 1) {
+      } catch (err: unknown) {
+        if (typeof err === 'object' && err !== null && 'statusCode' in err && (err as { statusCode: number }).statusCode === 429 && i < modelQueue.length - 1) {
           // Rate-limited — silently try next model
           continue;
         }
         // Final error
-        const msg = err?.message ?? 'Something went wrong. Please try again.';
+        const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
         setMessages(prev => prev.map(m =>
           m.id === assistantId ? { ...m, content: `⚠️ ${msg}` } : m
         ));

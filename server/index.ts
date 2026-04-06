@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import { db } from "./db.js";
 import { conversations, messages } from "../shared/schema.js";
@@ -36,8 +39,8 @@ app.post("/api/conversations", async (req, res) => {
       .values({ title: title || "New Conversation", model })
       .returning();
     res.json(conv);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 
@@ -51,8 +54,8 @@ app.patch("/api/conversations/:id", async (req, res) => {
       .where(eq(conversations.id, id))
       .returning();
     res.json(conv);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 
@@ -61,8 +64,8 @@ app.delete("/api/conversations/:id", async (req, res) => {
     const { id } = req.params;
     await db.delete(conversations).where(eq(conversations.id, id));
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 
@@ -77,22 +80,22 @@ app.get("/api/conversations/:id/messages", async (req, res) => {
       .where(eq(messages.conversationId, id))
       .orderBy(messages.createdAt);
     res.json(data);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 
 app.post("/api/conversations/:id/messages", async (req, res) => {
   try {
     const { id } = req.params;
-    const { role, content } = req.body;
+    const { role, content, messageId } = req.body;
     const [msg] = await db
       .insert(messages)
-      .values({ conversationId: id, role, content })
+      .values({ id: messageId, conversationId: id, role, content })
       .returning();
     res.json(msg);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 
@@ -101,8 +104,8 @@ app.delete("/api/messages/:id", async (req, res) => {
     const { id } = req.params;
     await db.delete(messages).where(eq(messages.id, id));
     res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 
@@ -122,13 +125,13 @@ app.get("/api/models", async (_req, res) => {
       res.status(response.status).json({ error: "Failed to fetch models from OpenRouter" });
       return;
     }
-    const data: any = await response.json();
+    const data: { data?: { id: string; pricing?: { prompt: string; completion: string } }[] } = await response.json();
     const free = (data.data ?? []).filter(
-      (m: any) => m.pricing?.prompt === "0" && m.pricing?.completion === "0"
+      (m) => m.pricing?.prompt === "0" && m.pricing?.completion === "0"
     );
     res.json(free);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 
@@ -139,25 +142,25 @@ app.post("/api/chat", async (req, res) => {
     const { model, messages: chatMessages, temperature, top_p, max_tokens, presence_penalty, frequency_penalty } = req.body;
 
     const openRouterApiKey = process.env.OPENROUTER_API_KEY;
-    if (!openRouterApiKey) {
-      res.status(500).json({ error: "OpenRouter API key not configured" });
+    if (!openRouterApiKey || openRouterApiKey.includes("your_")) {
+      res.status(400).json({ error: "OpenRouter API key not configured properly. Please set OPENROUTER_API_KEY in .env" });
       return;
     }
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${openRouterApiKey}`,
+        "Authorization": `Bearer ${openRouterApiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://sparks-production-780a.up.railway.app",
-        "X-Title": "AI Chat App",
+        "HTTP-Referer": "https://sparks-ai-chat.onrender.com",
+        "X-Title": "Sparks AI Chat",
       },
       body: JSON.stringify({
         model,
         messages: chatMessages,
         stream: true,
-        ...(temperature !== undefined && { temperature }),
-        ...(top_p !== undefined && { top_p }),
+        temperature: temperature || 0.7,
+        top_p: top_p || 0.9,
         ...(max_tokens && { max_tokens }),
         ...(presence_penalty !== undefined && { presence_penalty }),
         ...(frequency_penalty !== undefined && { frequency_penalty }),
@@ -178,7 +181,9 @@ app.post("/api/chat", async (req, res) => {
         } else if (msg) {
           friendlyError = msg;
         }
-      } catch {}
+      } catch {
+        // ignore JSON parsing errors
+      }
       console.error("OpenRouter error:", errorText);
       res.status(response.status).json({ error: friendlyError });
       return;
@@ -198,8 +203,8 @@ app.post("/api/chat", async (req, res) => {
     }
 
     res.end();
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 import path from "path";
@@ -209,10 +214,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Serve frontend
-app.use(express.static(path.join(__dirname, "../../dist")));
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(__dirname, "../../dist/index.html"));
-});
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, "../../dist")));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(__dirname, "../../dist/index.html"));
+  });
+}
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });

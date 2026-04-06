@@ -37,8 +37,8 @@ export function useModels() {
 
       setError(null);
       setLastSynced(new Date());
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to fetch models');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch models');
       // Mark all existing models as offline on error
       setModels(prev => prev.map(m => ({ ...m, online: false })));
     } finally {

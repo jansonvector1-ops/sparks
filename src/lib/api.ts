@@ -50,11 +50,11 @@ export async function fetchMessages(conversationId: string): Promise<Message[]> 
   if (!res.ok) throw new Error('Failed to fetch messages');
   return res.json();
 }
-export async function createMessage(conversationId: string, role: string, content: string): Promise<Message> {
+export async function createMessage(conversationId: string, role: string, content: string, messageId: string): Promise<Message> {
   const res = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ role, content }),
+    body: JSON.stringify({ role, content, messageId }),
   });
   if (!res.ok) throw new Error('Failed to save message');
   return res.json();
@@ -94,7 +94,7 @@ export async function streamChat(
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-    const error: any = new Error(err.error || 'Chat request failed');
+    const error = new Error(err.error || 'Chat request failed') as Error & { statusCode: number };
     error.statusCode = res.status;
     throw error;
   }
