@@ -1,8 +1,8 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const conversations = pgTable("conversations", {
-  id: text("id").primaryKey().default(sql`concat(extract(epoch from now())::text, '-', floor(random() * 1000000)::text)`),
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull().default("New Conversation"),
   model: text("model").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -10,8 +10,8 @@ export const conversations = pgTable("conversations", {
 });
 
 export const messages = pgTable("messages", {
-  id: text("id").primaryKey().default(sql`concat(extract(epoch from now())::text, '-', floor(random() * 1000000)::text)`),
-  conversationId: text("conversation_id")
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: uuid("conversation_id")
     .notNull()
     .references(() => conversations.id, { onDelete: "cascade" }),
   role: text("role").notNull(),
