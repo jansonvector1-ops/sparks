@@ -273,9 +273,19 @@ function App() {
           }
         }
 
+        if (!fullResponse) {
+          const noResponseText = '⚠️ No response received from the selected model. Please try another model or send again.';
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? { ...m, content: noResponseText } : m
+          ));
+          usedModel = null;
+          break;
+        }
+
         usedModel = modelId;
-        if (conversationId && fullResponse) {
+        if (conversationId) {
           await createMessage(conversationId, 'assistant', fullResponse, assistantId);
+          await loadConversations();
         }
         break; // success — stop trying
 

@@ -93,6 +93,12 @@ app.post("/api/conversations/:id/messages", async (req, res) => {
       .insert(messages)
       .values({ id: messageId, conversationId: id, role, content })
       .returning();
+
+    await db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversations.id, id));
+
     res.json(msg);
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
