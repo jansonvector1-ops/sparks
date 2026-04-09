@@ -9,6 +9,7 @@ export interface Project {
 export interface CustomModel {
   id: string;
   name: string;
+  model: string;
   baseUrl: string;
   apiKey: string;
 }
