@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Settings as SettingsIcon, Monitor, Sliders, AlertTriangle, ArrowDownUp, RotateCcw } from 'lucide-react';
+import { X, Settings as SettingsIcon, Monitor, Sliders, AlertTriangle, ArrowDownUp, RotateCcw, Key, Plus, Trash2 } from 'lucide-react';
+import { loadCustomModels, saveCustomModelsToStorage, type CustomModel } from '../lib/projects';
 
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark';
@@ -25,7 +26,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   frequencyPenalty: 0,
 };
 
-type Tab = 'general' | 'display' | 'sampling' | 'penalties' | 'import-export';
+type Tab = 'general' | 'display' | 'sampling' | 'penalties' | 'import-export' | 'custom-models';
 
 const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'general', label: 'General', icon: <SettingsIcon size={15} /> },
@@ -33,6 +34,7 @@ const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'sampling', label: 'Sampling', icon: <Sliders size={15} /> },
   { id: 'penalties', label: 'Penalties', icon: <AlertTriangle size={15} /> },
   { id: 'import-export', label: 'Import/Export', icon: <ArrowDownUp size={15} /> },
+  { id: 'custom-models', label: 'Custom Models', icon: <Key size={15} /> },
 ];
 
 interface SliderRowProps {
@@ -70,6 +72,83 @@ function SliderRow({ label, value, min, max, step, onChange, hint }: SliderRowPr
         className="w-full accent-accent"
       />
       {hint && <p className="text-xs text-text-muted">{hint}</p>}
+    </div>
+  );
+}
+
+function CustomModelsTab() {
+  const [models, setModels] = useState<CustomModel[]>(() => loadCustomModels());
+  const [form, setForm] = useState({ name: '', model: '', baseUrl: 'https://openrouter.ai/api/v1', apiKey: '' });
+
+  const save = () => {
+    if (!form.name || !form.model) return;
+    const updated = [...models, { ...form, id: Date.now().toString() }];
+    setModels(updated);
+    saveCustomModelsToStorage(updated);
+    setForm({ name: '', model: '', baseUrl: 'https://openrouter.ai/api/v1', apiKey: '' });
+  };
+
+  const remove = (id: string) => {
+    const updated = models.filter(m => m.id !== id);
+    setModels(updated);
+    saveCustomModelsToStorage(updated);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-text-primary">Add Custom Model</p>
+        <input
+          placeholder="Display Name (e.g. GPT-4o)"
+          value={form.name}
+          onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+          className="w-full px-3 py-2 rounded-xl border border-border bg-surface-3 text-sm text-text-primary focus:outline-none focus:border-accent/50"
+        />
+        <input
+          placeholder="Model ID (e.g. openai/gpt-4o)"
+          value={form.model}
+          onChange={e => setForm(p => ({ ...p, model: e.target.value }))}
+          className="w-full px-3 py-2 rounded-xl border border-border bg-surface-3 text-sm text-text-primary focus:outline-none focus:border-accent/50"
+        />
+        <input
+          placeholder="Base URL"
+          value={form.baseUrl}
+          onChange={e => setForm(p => ({ ...p, baseUrl: e.target.value }))}
+          className="w-full px-3 py-2 rounded-xl border border-border bg-surface-3 text-sm text-text-primary focus:outline-none focus:border-accent/50"
+        />
+        <input
+          type="password"
+          placeholder="API Key (optional)"
+          value={form.apiKey}
+          onChange={e => setForm(p => ({ ...p, apiKey: e.target.value }))}
+          className="w-full px-3 py-2 rounded-xl border border-border bg-surface-3 text-sm text-text-primary focus:outline-none focus:border-accent/50"
+        />
+        <button
+          onClick={save}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent text-white text-sm hover:bg-accent-hover transition-colors"
+        >
+          <Plus size={13} /> Add Model
+        </button>
+      </div>
+      {models.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-text-muted font-medium">Saved Models</p>
+          {models.map(m => (
+            <div key={m.id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface-2">
+              <div>
+                <p className="text-sm font-medium text-text-primary">{m.name}</p>
+                <p className="text-xs text-text-muted">{m.model}</p>
+              </div>
+              <button
+                onClick={() => remove(m.id)}
+                className="text-text-muted hover:text-red-400 transition-colors"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -126,6 +205,7 @@ export function Settings({ settings, onSave, onClose, onExport, onClearHistory }
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
+
             {tab === 'general' && (
               <>
                 <div className="space-y-2">
@@ -139,7 +219,7 @@ export function Settings({ settings, onSave, onClose, onExport, onClearHistory }
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                   </select>
-                  <p className="text-xs text-text-muted">Choose between System (follows your device), Light, or Dark.</p>
+                  <p className="text-xs text-text-muted">Choose between System, Light, or Dark.</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-text-primary">Response Language</label>
@@ -245,6 +325,11 @@ export function Settings({ settings, onSave, onClose, onExport, onClearHistory }
                 </div>
               </div>
             )}
+
+            {tab === 'custom-models' && (
+              <CustomModelsTab />
+            )}
+
           </div>
         </div>
 
@@ -269,6 +354,7 @@ export function Settings({ settings, onSave, onClose, onExport, onClearHistory }
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );
