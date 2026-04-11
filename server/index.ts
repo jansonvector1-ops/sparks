@@ -131,10 +131,34 @@ app.get("/api/models", async (_req, res) => {
       res.status(response.status).json({ error: "Failed to fetch models from OpenRouter" });
       return;
     }
-    const data: { data?: { id: string; pricing?: { prompt: string; completion: string } }[] } = await response.json();
-    const free = (data.data ?? []).filter(
-      (m) => m.pricing?.prompt === "0" && m.pricing?.completion === "0"
-    );
+
+    const data: {
+      data?: {
+        id: string;
+        name: string;
+        context_length: number;
+        pricing?: { prompt: string; completion: string };
+        supported_parameters?: string[];
+        top_provider?: { is_moderated: boolean };
+      }[]
+    } = await response.json();
+
+    const free = (data.data ?? []).filter((m) => {
+      // Must be free
+      const isFree = m.pricing?.prompt === "0" && m.pricing?.completion === "0";
+      if (!isFree) return false;
+
+      // Must have supported_parameters (means endpoint exists)
+      const hasEndpoint = Array.isArray(m.supported_parameters) && m.supported_parameters.length > 0;
+      if (!hasEndpoint) return false;
+
+      // Must support basic chat (temperature param = real chat model)
+      const supportsChat = m.supported_parameters.includes("temperature");
+      if (!supportsChat) return false;
+
+      return true;
+    });
+
     res.json(free);
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
@@ -213,6 +237,7 @@ app.post("/api/chat", async (req, res) => {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
+
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -226,6 +251,7 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, "../../dist/index.html"));
   });
 }
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
