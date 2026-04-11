@@ -7,6 +7,12 @@ export interface ModelWithStatus extends FreeModel {
   online: boolean;
 }
 
+function isModelOnline(m: FreeModel): boolean {
+  // Backend already filters — but double-check supported_parameters
+  const params = m.supported_parameters ?? [];
+  return params.length > 0 && params.includes('temperature');
+}
+
 export function useModels() {
   const [models, setModels] = useState<ModelWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,17 +28,21 @@ export function useModels() {
         const prevMap = new Map(prev.map(m => [m.id, m]));
         const merged = new Map<string, ModelWithStatus>();
 
-        // Keep all known models, mark online status
+        // Keep known models, mark online status
         prevMap.forEach((m, id) => {
-          merged.set(id, { ...m, online: freshIds.has(id) });
+          merged.set(id, { ...m, online: freshIds.has(id) && isModelOnline(m) });
         });
 
-        // Add new models
+        // Add new models from API
         fresh.forEach(m => {
-          merged.set(m.id, { ...m, online: true });
+          merged.set(m.id, { ...m, online: isModelOnline(m) });
         });
 
-        return Array.from(merged.values()).sort((a, b) => a.name.localeCompare(b.name));
+        // Sort: online first, then alphabetical
+        return Array.from(merged.values()).sort((a, b) => {
+          if (a.online !== b.online) return a.online ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
       });
 
       setError(null);
