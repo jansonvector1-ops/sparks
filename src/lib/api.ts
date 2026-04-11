@@ -5,11 +5,13 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
+
 export interface Conversation {
   id: string;
   title: string;
   model: string;
 }
+
 export interface SamplingSettings {
   temperature: number;
   topP: number;
@@ -18,11 +20,13 @@ export interface SamplingSettings {
   frequencyPenalty: number;
   systemPrompt: string;
 }
+
 export async function fetchConversations(): Promise<Conversation[]> {
   const res = await fetch(`${API_BASE}/api/conversations`);
   if (!res.ok) throw new Error('Failed to fetch conversations');
   return res.json();
 }
+
 export async function createConversation(title: string, model: string): Promise<Conversation> {
   const res = await fetch(`${API_BASE}/api/conversations`, {
     method: 'POST',
@@ -32,6 +36,7 @@ export async function createConversation(title: string, model: string): Promise<
   if (!res.ok) throw new Error('Failed to create conversation');
   return res.json();
 }
+
 export async function updateConversation(id: string, title: string): Promise<Conversation> {
   const res = await fetch(`${API_BASE}/api/conversations/${id}`, {
     method: 'PATCH',
@@ -41,16 +46,24 @@ export async function updateConversation(id: string, title: string): Promise<Con
   if (!res.ok) throw new Error('Failed to update conversation');
   return res.json();
 }
+
 export async function deleteConversation(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/conversations/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete conversation');
 }
+
 export async function fetchMessages(conversationId: string): Promise<Message[]> {
   const res = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages`);
   if (!res.ok) throw new Error('Failed to fetch messages');
   return res.json();
 }
-export async function createMessage(conversationId: string, role: string, content: string, messageId: string): Promise<Message> {
+
+export async function createMessage(
+  conversationId: string,
+  role: string,
+  content: string,
+  messageId: string
+): Promise<Message> {
   const res = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -59,21 +72,26 @@ export async function createMessage(conversationId: string, role: string, conten
   if (!res.ok) throw new Error('Failed to save message');
   return res.json();
 }
+
 export async function deleteMessage(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/messages/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete message');
 }
+
 export interface FreeModel {
   id: string;
   name: string;
   context_length: number;
   pricing: { prompt: string; completion: string };
+  supported_parameters?: string[]; // ← இது add ஆச்சு
 }
+
 export async function fetchFreeModels(): Promise<FreeModel[]> {
   const res = await fetch(`${API_BASE}/api/models`);
   if (!res.ok) throw new Error('Failed to fetch models');
   return res.json();
 }
+
 export async function streamChat(
   model: string,
   chatMessages: { role: string; content: string }[],
