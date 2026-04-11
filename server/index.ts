@@ -149,11 +149,12 @@ app.get("/api/models", async (_req, res) => {
       if (!isFree) return false;
 
       // Must have supported_parameters (means endpoint exists)
-      const hasEndpoint = Array.isArray(m.supported_parameters) && m.supported_parameters.length > 0;
+      const params = m.supported_parameters ?? [];
+      const hasEndpoint = Array.isArray(params) && params.length > 0;
       if (!hasEndpoint) return false;
 
       // Must support basic chat (temperature param = real chat model)
-      const supportsChat = m.supported_parameters.includes("temperature");
+      const supportsChat = params.includes("temperature");
       if (!supportsChat) return false;
 
       return true;
