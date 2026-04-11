@@ -8,25 +8,24 @@ export interface Model {
 
 export const models: Model[] = [
   {
-    id: "grok-2-latest",
-    name: "Grok 2",
-    description: "Latest Grok model",
-    category: "powerful",
-    badge: "Recommended"
-  },
-  {
-    id: "meta-llama/llama-3.2-90b-vision-instruct:free",
-    name: "Llama 3.2 90B Vision",
-    description: "Free vision model",
-    category: "vision",
-    badge: "Free"
+    id: "meta-llama/llama-3.2-3b-instruct:free",
+    name: "Llama 3.2 3B",
+    description: "Fast & free lightweight model",
+    category: "fast",
+    badge: "Fastest"
   },
   {
     id: "meta-llama/llama-3.1-405b-instruct:free",
     name: "Llama 3.1 405B",
     description: "Free powerful model",
     category: "powerful",
-    badge: "Free"
+    badge: "Popular"
+  },
+  {
+    id: "meta-llama/llama-3.2-90b-vision-instruct:free",
+    name: "Llama 3.2 90B Vision",
+    description: "Free vision model",
+    category: "vision",
   },
 ];
 
@@ -41,9 +40,7 @@ export const categoryLabels: Record<Model['category'], string> = {
 /** Strip provider prefix and "(free)" from API model names */
 export function cleanModelName(rawName: string): string {
   let name = rawName;
-  // Remove "Provider: " prefix (e.g. "Google: ", "Arcee AI: ")
   name = name.replace(/^[^:]+:\s+/, '');
-  // Remove "(free)" suffix
   name = name.replace(/\s*\(free\)\s*/gi, '').trim();
   return name;
 }
