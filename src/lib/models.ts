@@ -15,13 +15,6 @@ export const models: Model[] = [
     badge: "Fastest"
   },
   {
-    id: "meta-llama/llama-3.1-405b-instruct:free",
-    name: "Llama 3.1 405B",
-    description: "Free powerful model",
-    category: "powerful",
-    badge: "Popular"
-  },
-  {
     id: "meta-llama/llama-3.2-90b-vision-instruct:free",
     name: "Llama 3.2 90B Vision",
     description: "Free vision model",
