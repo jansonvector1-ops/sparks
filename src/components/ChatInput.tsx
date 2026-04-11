@@ -11,6 +11,8 @@ interface ChatInputProps {
   contextWindow?: number;
   freeModels?: FreeModel[];
   language?: string;
+  initialValue?: string;
+  onValueChange?: (value: string) => void;
 }
 
 export function ChatInput({
@@ -21,8 +23,10 @@ export function ChatInput({
   contextWindow,
   freeModels,
   language,
+  initialValue,
+  onValueChange,
 }: ChatInputProps) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialValue ?? "");
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -79,6 +83,7 @@ export function ChatInput({
     if (input.trim() && !disabled) {
       onSendMessage(input.trim());
       setInput("");
+      onValueChange?.("");
       if (textareaRef.current) textareaRef.current.style.height = "auto";
     }
   };
@@ -90,6 +95,10 @@ export function ChatInput({
     }
   };
 
+  useEffect(() => {
+    if (initialValue !== undefined) setInput(initialValue);
+  }, [initialValue]);
+
   return (
     <div className="rounded-2xl border border-border bg-surface-2 shadow-lg transition-shadow focus-within:border-border focus-within:shadow-xl overflow-hidden">
       {/* Textarea */}
@@ -97,7 +106,7 @@ export function ChatInput({
         <textarea
           ref={textareaRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => { setInput(e.target.value); onValueChange?.(e.target.value); }}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           disabled={disabled}
