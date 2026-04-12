@@ -318,7 +318,7 @@ app.post("/api/chat", async (req, res) => {
       headers: {
         "Authorization": `Bearer ${openRouterApiKey}`,
         "Content-Type": "application/json",
-"HTTP-Referer": process.env.FRONTEND_URL || "https://sparks-gamma.vercel.app",
+        "HTTP-Referer": "https://sparks-gamma.vercel.app",
         "X-Title": "Sparks AI Chat",
       },
       body: JSON.stringify({
