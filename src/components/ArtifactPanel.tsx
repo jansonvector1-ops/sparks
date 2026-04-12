@@ -149,11 +149,11 @@ export function ArtifactPanel({
 
     try {
       const msgHistory = [
-        { role: 'system', content: 'You are a creative assistant. Generate 3 unique and specific project ideas for the user. Return ONLY a numbered list with no additional text. Example: 1. Idea one\n2. Idea two\n3. Idea three' },
-        { role: 'user', content: `Suggest 3 specific ideas for building ${categoryName}. Be concise and creative.` },
+        { role: 'system', content: 'You are a creative assistant. Generate exactly 3 unique and specific project ideas for the user. Return ONLY a numbered list with no additional text or formatting. Each line should start with a number.' },
+        { role: 'user', content: `Suggest 3 specific ideas for building ${categoryName}. Be concise and creative. Format: 1. Idea\n2. Idea\n3. Idea` },
       ];
 
-      const stream = await streamChat('claude-3-5-sonnet-20241022', msgHistory, {
+      const stream = await streamChat('meta-llama/llama-3.2-90b-vision-instruct:free', msgHistory, {
         temperature: 0.8,
         topP: 1,
         maxTokens: 300,
@@ -184,29 +184,30 @@ export function ArtifactPanel({
       // Parse suggestions from numbered list
       const suggestionArray = fullResponse
         .split('\n')
-        .filter(line => /^\d+\.|^-/.test(line.trim()))
-        .map(line => line.replace(/^\d+\.\s*|-\s*/, '').trim())
-        .filter(line => line.length > 0);
+        .filter(line => /^\d+\./.test(line.trim()))
+        .map(line => line.replace(/^\d+\.\s*/, '').trim())
+        .filter(line => line.length > 0)
+        .slice(0, 3);
 
-      setSuggestions(suggestionArray.length > 0 ? suggestionArray : ['Unable to fetch suggestions']);
+      setSuggestions(suggestionArray.length > 0 ? suggestionArray : ['Try clicking the button again']);
     } catch (error) {
       console.error('Failed to fetch suggestions:', error);
-      setSuggestions(['Failed to fetch suggestions. Try again.']);
+      setSuggestions(['Click the button again to try']);
     } finally {
       setLoadingSuggestions(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-3xl max-h-[90vh] rounded-2xl border border-border bg-surface shadow-2xl flex flex-col animate-fade-in overflow-hidden">
+      {/* Full-page Modal */}
+      <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl border-0 sm:border border-border bg-surface shadow-2xl flex flex-col animate-fade-in overflow-hidden">
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
@@ -239,21 +240,21 @@ export function ArtifactPanel({
 
       {/* Full iframe when item open */}
       {openItem ? (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden w-full h-full">
           <div className="px-4 py-2 border-b border-border flex-shrink-0">
             <span className="text-sm font-medium text-text-primary">{openItem.title}</span>
           </div>
           <iframe
             srcDoc={openItem.html}
             sandbox="allow-scripts allow-same-origin"
-            className="flex-1 border-0"
+            className="flex-1 border-0 w-full"
             title={openItem.title}
           />
         </div>
       ) : tab === 'categories' ? (
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-            <div className="max-w-2xl">
+        <div className="flex-1 flex flex-col overflow-hidden w-full h-full">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 w-full">
+            <div className="max-w-2xl mx-auto">
               {selectedCategory ? (
                 <>
                   <button
@@ -359,16 +360,16 @@ export function ArtifactPanel({
           )}
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-3">
+          <div className="flex-1 overflow-y-auto p-3 w-full">
             {(tab === 'games' || tab === 'creative') && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-max">
                 {items.map(item => (
                   <button
                     key={item.title}
                     onClick={() => setOpenItem(item)}
-                    className="flex flex-col rounded-xl border border-border bg-surface-2 hover:bg-surface-3 overflow-hidden transition-colors text-left"
+                    className="flex flex-col rounded-xl border border-border bg-surface-2 hover:bg-surface-3 overflow-hidden transition-colors text-left h-48 sm:h-56"
                   >
-                    <div className="relative w-full" style={{ paddingBottom: '70%' }}>
+                    <div className="relative w-full flex-1 overflow-hidden">
                       <iframe
                         srcDoc={item.html}
                         sandbox="allow-scripts allow-same-origin"
@@ -377,7 +378,7 @@ export function ArtifactPanel({
                         style={{ transform: 'scale(0.6)', transformOrigin: 'top left', width: '167%', height: '167%' }}
                       />
                     </div>
-                    <div className="px-2 py-1.5">
+                    <div className="px-2 py-1.5 flex-shrink-0">
                       <span className="text-xs font-medium text-text-primary">{item.emoji} {item.title}</span>
                     </div>
                   </button>
