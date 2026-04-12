@@ -31,227 +31,14 @@ app.use((_req, res, next) => {
   }
   next();
 });
+
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
 // --- Public Auth Endpoints (no auth required) ---
-
 app.post("/api/auth/verify", authMiddleware, verifyAuthToken);
 app.post("/api/auth/logout", logoutUser);
 
-// --- Protected API Routes ---
-// Apply auth middleware to all remaining /api routes
-app.use("/api", authMiddleware);
-
-// --- User Profile Endpoints ---
-
-app.get("/api/user/profile", getUserProfile);
-app.patch("/api/user/profile", updateUserProfile);
-app.delete("/api/user/account", deleteUserAccount);
-app.post("/api/user/change-password", changePassword);
-
-// --- Admin Endpoints ---
-
-app.get("/api/admin/users", requireAdmin, getAllUsers);
-app.delete("/api/admin/users/:id", requireAdmin, deleteUserAsAdmin);
-app.get("/api/admin/logs", requireAdmin, getAdminLogs);
-
-// --- Conversations ---
-
-app.get("/api/conversations", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const data = await db
-      .select({ id: conversations.id, title: conversations.title, model: conversations.model })
-      .from(conversations)
-      .where(eq(conversations.user_id, userId))
-      .orderBy(desc(conversations.updatedAt))
-      .limit(10);
-    res.json(data);
-  } catch (err: unknown) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
-});
-
-app.post("/api/conversations", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const { title, model } = req.body;
-    const [conv] = await db
-      .insert(conversations)
-      .values({ user_id: userId, title: title || "New Conversation", model })
-      .returning();
-    res.json(conv);
-  } catch (err: unknown) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
-});
-
-app.patch("/api/conversations/:id", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const { id } = req.params;
-    const { title } = req.body;
-
-    // Verify ownership
-    const existing = await db
-      .select()
-      .from(conversations)
-      .where(and(eq(conversations.id, id), eq(conversations.user_id, userId)))
-      .limit(1);
-
-    if (existing.length === 0) {
-      return res.status(403).json({ error: 'Not authorized to update this conversation' });
-    }
-
-    const [conv] = await db
-      .update(conversations)
-      .set({ title, updatedAt: new Date() })
-      .where(eq(conversations.id, id))
-      .returning();
-    res.json(conv);
-  } catch (err: unknown) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
-});
-
-app.delete("/api/conversations/:id", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const { id } = req.params;
-
-    // Verify ownership
-    const existing = await db
-      .select()
-      .from(conversations)
-      .where(and(eq(conversations.id, id), eq(conversations.user_id, userId)))
-      .limit(1);
-
-    if (existing.length === 0) {
-      return res.status(403).json({ error: 'Not authorized to delete this conversation' });
-    }
-
-    await db.delete(conversations).where(eq(conversations.id, id));
-    res.json({ success: true });
-  } catch (err: unknown) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
-});
-
-// --- Messages ---
-
-app.get("/api/conversations/:id/messages", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const { id } = req.params;
-
-    // Verify ownership
-    const conv = await db
-      .select()
-      .from(conversations)
-      .where(and(eq(conversations.id, id), eq(conversations.user_id, userId)))
-      .limit(1);
-
-    if (conv.length === 0) {
-      return res.status(403).json({ error: 'Not authorized to view these messages' });
-    }
-
-    const data = await db
-      .select({ id: messages.id, role: messages.role, content: messages.content })
-      .from(messages)
-      .where(eq(messages.conversationId, id))
-      .orderBy(messages.createdAt);
-    res.json(data);
-  } catch (err: unknown) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
-});
-
-app.post("/api/conversations/:id/messages", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const { id } = req.params;
-    const { role, content, messageId } = req.body;
-
-    // Verify ownership
-    const conv = await db
-      .select()
-      .from(conversations)
-      .where(and(eq(conversations.id, id), eq(conversations.user_id, userId)))
-      .limit(1);
-
-    if (conv.length === 0) {
-      return res.status(403).json({ error: 'Not authorized to add messages to this conversation' });
-    }
-
-    const [msg] = await db
-      .insert(messages)
-      .values({ id: messageId, user_id: userId, conversationId: id, role, content })
-      .returning();
-
-    await db
-      .update(conversations)
-      .set({ updatedAt: new Date() })
-      .where(eq(conversations.id, id));
-
-    res.json(msg);
-  } catch (err: unknown) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
-});
-
-app.delete("/api/messages/:id", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const { id } = req.params;
-
-    // Verify ownership
-    const msg = await db
-      .select()
-      .from(messages)
-      .where(and(eq(messages.id, id), eq(messages.user_id, userId)))
-      .limit(1);
-
-    if (msg.length === 0) {
-      return res.status(403).json({ error: 'Not authorized to delete this message' });
-    }
-
-    await db.delete(messages).where(eq(messages.id, id));
-    res.json({ success: true });
-  } catch (err: unknown) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
-});
-
-// --- Free Models from OpenRouter ---
-
+// --- Free Models from OpenRouter (PUBLIC - no auth) ---
 app.get("/api/models", async (_req, res) => {
   try {
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -279,19 +66,13 @@ app.get("/api/models", async (_req, res) => {
     } = await response.json();
 
     const free = (data.data ?? []).filter((m) => {
-      // Must be free
       const isFree = m.pricing?.prompt === "0" && m.pricing?.completion === "0";
       if (!isFree) return false;
-
-      // Must have supported_parameters (means endpoint exists)
       const params = m.supported_parameters ?? [];
       const hasEndpoint = Array.isArray(params) && params.length > 0;
       if (!hasEndpoint) return false;
-
-      // Must support basic chat (temperature param = real chat model)
       const supportsChat = params.includes("temperature");
       if (!supportsChat) return false;
-
       return true;
     });
 
@@ -301,15 +82,14 @@ app.get("/api/models", async (_req, res) => {
   }
 });
 
-// --- AI Chat (proxy to OpenRouter) ---
-
+// --- AI Chat (PUBLIC - no auth) ---
 app.post("/api/chat", async (req, res) => {
   try {
     const { model, messages: chatMessages, temperature, top_p, max_tokens, presence_penalty, frequency_penalty } = req.body;
 
     const openRouterApiKey = process.env.OPENROUTER_API_KEY;
     if (!openRouterApiKey || openRouterApiKey.includes("your_")) {
-      res.status(400).json({ error: "OpenRouter API key not configured properly. Please set OPENROUTER_API_KEY in .env" });
+      res.status(400).json({ error: "OpenRouter API key not configured properly." });
       return;
     }
 
@@ -348,7 +128,7 @@ app.post("/api/chat", async (req, res) => {
           friendlyError = msg;
         }
       } catch {
-        // ignore JSON parsing errors
+        // ignore
       }
       console.error("OpenRouter error:", errorText);
       res.status(response.status).json({ error: friendlyError });
@@ -374,13 +154,200 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+// --- Protected API Routes (auth required) ---
+app.use("/api", authMiddleware);
+
+// --- User Profile Endpoints ---
+app.get("/api/user/profile", getUserProfile);
+app.patch("/api/user/profile", updateUserProfile);
+app.delete("/api/user/account", deleteUserAccount);
+app.post("/api/user/change-password", changePassword);
+
+// --- Admin Endpoints ---
+app.get("/api/admin/users", requireAdmin, getAllUsers);
+app.delete("/api/admin/users/:id", requireAdmin, deleteUserAsAdmin);
+app.get("/api/admin/logs", requireAdmin, getAdminLogs);
+
+// --- Conversations ---
+app.get("/api/conversations", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    const data = await db
+      .select({ id: conversations.id, title: conversations.title, model: conversations.model })
+      .from(conversations)
+      .where(eq(conversations.user_id, userId))
+      .orderBy(desc(conversations.updatedAt))
+      .limit(10);
+    res.json(data);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+app.post("/api/conversations", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { title, model } = req.body;
+    const [conv] = await db
+      .insert(conversations)
+      .values({ user_id: userId, title: title || "New Conversation", model })
+      .returning();
+    res.json(conv);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+app.patch("/api/conversations/:id", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { id } = req.params;
+    const { title } = req.body;
+
+    const existing = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.user_id, userId)))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return res.status(403).json({ error: 'Not authorized to update this conversation' });
+    }
+
+    const [conv] = await db
+      .update(conversations)
+      .set({ title, updatedAt: new Date() })
+      .where(eq(conversations.id, id))
+      .returning();
+    res.json(conv);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+app.delete("/api/conversations/:id", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { id } = req.params;
+
+    const existing = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.user_id, userId)))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return res.status(403).json({ error: 'Not authorized to delete this conversation' });
+    }
+
+    await db.delete(conversations).where(eq(conversations.id, id));
+    res.json({ success: true });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+// --- Messages ---
+app.get("/api/conversations/:id/messages", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { id } = req.params;
+
+    const conv = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.user_id, userId)))
+      .limit(1);
+
+    if (conv.length === 0) {
+      return res.status(403).json({ error: 'Not authorized to view these messages' });
+    }
+
+    const data = await db
+      .select({ id: messages.id, role: messages.role, content: messages.content })
+      .from(messages)
+      .where(eq(messages.conversationId, id))
+      .orderBy(messages.createdAt);
+    res.json(data);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+app.post("/api/conversations/:id/messages", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { id } = req.params;
+    const { role, content, messageId } = req.body;
+
+    const conv = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, id), eq(conversations.user_id, userId)))
+      .limit(1);
+
+    if (conv.length === 0) {
+      return res.status(403).json({ error: 'Not authorized to add messages to this conversation' });
+    }
+
+    const [msg] = await db
+      .insert(messages)
+      .values({ id: messageId, user_id: userId, conversationId: id, role, content })
+      .returning();
+
+    await db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversations.id, id));
+
+    res.json(msg);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+app.delete("/api/messages/:id", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { id } = req.params;
+
+    const msg = await db
+      .select()
+      .from(messages)
+      .where(and(eq(messages.id, id), eq(messages.user_id, userId)))
+      .limit(1);
+
+    if (msg.length === 0) {
+      return res.status(403).json({ error: 'Not authorized to delete this message' });
+    }
+
+    await db.delete(messages).where(eq(messages.id, id));
+    res.json({ success: true });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve frontend
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, "../../dist")));
   app.get("*", (_req, res) => {
