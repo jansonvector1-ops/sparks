@@ -30,8 +30,8 @@ export interface SamplingSettings {
   systemPrompt: string;
 }
 
-export async function fetchConversations(): Promise<Conversation[]> {
-  const res = await fetch(`${API_BASE}/api/conversations`, {
+export async function fetchFreeModels(): Promise<FreeModel[]> {
+  const res = await fetch(`${API_BASE}/api/models`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Failed to fetch conversations');
