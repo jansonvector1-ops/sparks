@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Extend Express Request to include user
 declare global {
@@ -14,15 +14,22 @@ declare global {
   }
 }
 
-// Initialize Supabase client
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Lazy-load Supabase client
+let supabase: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
+function getSupabaseClient(): SupabaseClient {
+  if (!supabase) {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing Supabase environment variables: VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+    }
+
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+  }
+  return supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
  * Extract JWT token from Authorization header
@@ -40,13 +47,13 @@ export function extractToken(req: Request): string | null {
  */
 export async function verifyToken(token: string) {
   try {
-    const { data, error } = await supabase.auth.getUser(token);
+    const { data, error } = await getSupabaseClient().auth.getUser(token);
     if (error || !data.user || !data.user.email) {
       return null;
     }
 
     // Get user profile for role
-    const { data: profile } = await supabase
+    const { data: profile } = await getSupabaseClient()
       .from('users_profiles')
       .select('role')
       .eq('id', data.user.id)
@@ -143,7 +150,7 @@ export async function changePassword(req: Request, res: Response) {
 
   try {
     // Verify current password by attempting to sign in
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await getSupabaseClient().auth.signInWithPassword({
       email: req.user.email,
       password: currentPassword,
     });
@@ -153,7 +160,7 @@ export async function changePassword(req: Request, res: Response) {
     }
 
     // Update password
-    const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
+    const { error } = await getSupabaseClient().auth.admin.updateUserById(req.user.id, {
       password: newPassword,
     });
 
@@ -175,7 +182,7 @@ export async function getUserProfile(req: Request, res: Response) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('users_profiles')
       .select('*')
       .eq('id', req.user.id)
@@ -201,7 +208,7 @@ export async function updateUserProfile(req: Request, res: Response) {
   const { full_name, avatar_url } = req.body;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('users_profiles')
       .update({
         full_name,
@@ -237,7 +244,7 @@ export async function deleteUserAccount(req: Request, res: Response) {
 
   try {
     // Verify password
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await getSupabaseClient().auth.signInWithPassword({
       email: req.user.email,
       password,
     });
@@ -247,7 +254,7 @@ export async function deleteUserAccount(req: Request, res: Response) {
     }
 
     // Delete user
-    const { error } = await supabase.auth.admin.deleteUser(req.user.id);
+    const { error } = await getSupabaseClient().auth.admin.deleteUser(req.user.id);
 
     if (error) {
       return res.status(400).json({ error: error.message });
@@ -267,7 +274,7 @@ export async function getAllUsers(req: Request, res: Response) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('users_profiles')
       .select('*')
       .order('created_at', { ascending: false });
@@ -297,7 +304,7 @@ export async function deleteUserAsAdmin(req: Request, res: Response) {
 
   try {
     // Log the action
-    await supabase.from('admin_logs').insert({
+    await getSupabaseClient().from('admin_logs').insert({
       admin_id: req.user.id,
       action: 'user_deleted',
       target_user_id: id,
@@ -305,7 +312,7 @@ export async function deleteUserAsAdmin(req: Request, res: Response) {
     });
 
     // Delete user
-    const { error } = await supabase.auth.admin.deleteUser(id);
+    const { error } = await getSupabaseClient().auth.admin.deleteUser(id);
 
     if (error) {
       return res.status(400).json({ error: error.message });
@@ -325,7 +332,7 @@ export async function getAdminLogs(req: Request, res: Response) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('admin_logs')
       .select('*')
       .order('created_at', { ascending: false })
