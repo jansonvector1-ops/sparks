@@ -13,12 +13,18 @@ import { ChatInput } from './components/ChatInput';
 import { Settings, DEFAULT_SETTINGS, type AppSettings } from './components/Settings';
 import { ModelsPage } from './components/ModelsPage';
 import { ArtifactPanel } from './components/ArtifactPanel';
+import { AuthFlow } from './components/AuthFlow';
+import { UserProfile } from './components/UserProfile';
+import { PrivacySupport } from './components/PrivacySupport';
+import { AdminPanel } from './components/AdminPanel';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import {
   SquarePen, Search, MessageSquare, Trash2, PenLine, Settings as SettingsIcon,
-  PanelLeft, X, LayoutGrid, Link, Check as CheckIcon, Zap,
+  PanelLeft, X, LayoutGrid, Link, Check as CheckIcon, Zap, User, Shield,
 } from 'lucide-react';
 
-function App() {
+function AppContent() {
   // Settings (persisted)
   const [settings, setSettings] = useState<AppSettings>(() => {
     try {
@@ -37,6 +43,7 @@ function App() {
   // View state
   const [view, setView] = useState<'models' | 'chat' | 'artifacts'>('models');
   const [urlCopied, setUrlCopied] = useState(false);
+  const [sidePanel, setSidePanel] = useState<'profile' | 'privacy' | 'admin' | null>(null);
 
   // Chat state
   const [selectedModel, setSelectedModel] = useState(models[0].id);
@@ -59,6 +66,9 @@ function App() {
   // Projects
   const [projects, setProjects] = useState<Project[]>(() => loadProjects());
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+
+  // Auth
+  const { user, loading: authLoading, isAdmin } = useAuth();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -214,7 +224,7 @@ function App() {
     if (!proj) return;
     setActiveProjectId(id);
     setSelectedModel(proj.model);
-    setArtifactOpen(false);
+    setSidePanel(null);
     setView('chat');
   };
 
@@ -358,6 +368,21 @@ function App() {
   };
 
   // ─────────────────────────────────────────────────────────────────────────
+
+  if (authLoading) {
+    return (
+      <div className="flex h-screen bg-surface items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-text-muted">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthFlow />;
+  }
 
   return (
     <div className={`flex h-screen bg-surface text-text-primary overflow-hidden ${fontSizeClass}`}>
@@ -506,6 +531,24 @@ function App() {
               {urlCopied ? <CheckIcon size={13} className="text-green-500" /> : <Link size={13} />}
               <span className="hidden sm:inline text-[11px]">{urlCopied ? 'Copied!' : 'Copy URL'}</span>
             </button>
+            {/* Admin panel button */}
+            {isAdmin() && (
+              <button
+                onClick={() => setSidePanel(sidePanel === 'admin' ? null : 'admin')}
+                title="Admin panel"
+                className="w-8 h-8 flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+              >
+                <Shield size={16} />
+              </button>
+            )}
+            {/* User profile button */}
+            <button
+              onClick={() => setSidePanel(sidePanel === 'profile' ? null : 'profile')}
+              title="Profile"
+              className="w-8 h-8 flex items-center justify-center rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-2 transition-colors"
+            >
+              <User size={16} />
+            </button>
             <button
               onClick={() => setSettingsOpen(true)}
               data-testid="button-settings"
@@ -608,8 +651,37 @@ function App() {
           onClearHistory={clearAllHistory}
         />
       )}
+
+      {/* ── Side Panel: Profile / Privacy / Admin ────────────────────────── */}
+      {sidePanel && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-end">
+          <div className="w-full max-w-[500px] h-screen bg-surface-2 overflow-y-auto">
+            {sidePanel === 'profile' && (
+              <div className="p-4 sm:p-6">
+                <UserProfile onBack={() => setSidePanel(null)} />
+              </div>
+            )}
+            {sidePanel === 'privacy' && (
+              <div className="p-4 sm:p-6">
+                <PrivacySupport onBack={() => setSidePanel(null)} />
+              </div>
+            )}
+            {sidePanel === 'admin' && (
+              <div className="p-4 sm:p-6">
+                <AdminPanel onBack={() => setSidePanel(null)} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
