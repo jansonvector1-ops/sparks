@@ -35,7 +35,7 @@ function App() {
   const { models: freeModels } = useModels();
 
   // View state
-  const [view, setView] = useState<'models' | 'chat'>('models');
+  const [view, setView] = useState<'models' | 'chat' | 'artifacts'>('models');
   const [urlCopied, setUrlCopied] = useState(false);
 
   // Chat state
@@ -53,8 +53,7 @@ function App() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
 
-  // Artifact panel
-  const [artifactOpen, setArtifactOpen] = useState(false);
+  // Chat input
   const [chatInputValue, setChatInputValue] = useState('');
 
   // Projects
@@ -400,10 +399,10 @@ function App() {
             <span className="hidden sm:inline">Search</span>
           </button>
 
-          {/* ⚡ Artifacts button */}
+          {/* ⚡ Artifacts tab */}
           <button
-            onClick={() => setArtifactOpen(v => !v)}
-            className={`w-full flex items-center gap-2.5 px-2 sm:px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors ${artifactOpen ? 'bg-surface-3 text-accent' : 'text-text-secondary hover:text-text-primary hover:bg-surface-3'}`}
+            onClick={() => setView('artifacts')}
+            className={`w-full flex items-center gap-2.5 px-2 sm:px-3 py-2 rounded-xl text-xs sm:text-sm transition-colors ${view === 'artifacts' ? 'bg-surface-3 text-accent' : 'text-text-secondary hover:text-text-primary hover:bg-surface-3'}`}
           >
             <Zap size={14} className="flex-shrink-0" />
             <span className="hidden sm:inline">Artifacts</span>
@@ -498,14 +497,7 @@ function App() {
             {showSidebar ? <X size={16} /> : <PanelLeft size={16} />}
           </button>
           <div className="flex items-center gap-1">
-            {/* ⚡ Artifacts button in header (mobile friendly) */}
-            <button
-              onClick={() => setArtifactOpen(v => !v)}
-              className={`flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs transition-colors ${artifactOpen ? 'text-accent bg-accent/10' : 'text-text-muted hover:text-text-primary hover:bg-surface-2'}`}
-            >
-              <Zap size={13} />
-              <span className="hidden sm:inline text-[11px]">Artifacts</span>
-            </button>
+            {/* Copy URL button */}
             <button
               onClick={handleCopyUrl}
               title="Copy app URL"
@@ -528,6 +520,18 @@ function App() {
         {view === 'models' ? (
           <div className="flex-1 flex flex-col pt-12 overflow-hidden">
             <ModelsPage onChatWithModel={handleChatWithModel} />
+          </div>
+        ) : view === 'artifacts' ? (
+          <div className="flex-1 flex flex-col pt-12 overflow-hidden">
+            <ArtifactPanel
+              onClose={() => setView('chat')}
+              projects={projects}
+              activeProjectId={activeProjectId}
+              onLoadProject={handleLoadProject}
+              onCreateProject={handleCreateProject}
+              onDeleteProject={handleDeleteProject}
+              onPromptSelect={handlePromptSelect}
+            />
           </div>
         ) : messages.length === 0 ? (
           /* ── Chat empty state: input centered ────────────────────────── */
@@ -593,19 +597,6 @@ function App() {
           </>
         )}
       </div>
-
-      {/* ── Artifact Panel ────────────────────────────────────────────── */}
-      {artifactOpen && (
-        <ArtifactPanel
-          onClose={() => setArtifactOpen(false)}
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onLoadProject={handleLoadProject}
-          onCreateProject={handleCreateProject}
-          onDeleteProject={handleDeleteProject}
-          onPromptSelect={handlePromptSelect}
-        />
-      )}
 
       {/* ── Settings modal ───────────────────────────────────────────────── */}
       {settingsOpen && (

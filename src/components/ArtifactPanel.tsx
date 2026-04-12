@@ -199,15 +199,7 @@ export function ArtifactPanel({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Full-page Modal */}
-      <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl border-0 sm:border border-border bg-surface shadow-2xl flex flex-col animate-fade-in overflow-hidden">
+    <div className="w-full h-full flex flex-col overflow-hidden">
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
@@ -230,12 +222,6 @@ export function ArtifactPanel({
         ) : (
           <span className="text-sm font-semibold text-text-primary">⚡ Artifacts</span>
         )}
-        <button
-          onClick={onClose}
-          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-2 text-text-muted hover:text-text-primary transition-colors"
-        >
-          <X size={15} />
-        </button>
       </div>
 
       {/* Full iframe when item open */}
@@ -442,7 +428,6 @@ export function ArtifactPanel({
           </div>
         </>
       )}
-      </div>
     </div>
   );
 }
