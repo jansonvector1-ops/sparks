@@ -30,8 +30,8 @@ export interface SamplingSettings {
   systemPrompt: string;
 }
 
-export async function fetchFreeModels(): Promise<FreeModel[]> {
-  const res = await fetch(`${API_BASE}/api/models`, {
+export async function fetchConversations(): Promise<Conversation[]> {
+  const res = await fetch(`${API_BASE}/api/conversations`, {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Failed to fetch conversations');
@@ -102,7 +102,15 @@ export interface FreeModel {
   name: string;
   context_length: number;
   pricing: { prompt: string; completion: string };
-  supported_parameters?: string[]; // ← இது add ஆச்சு
+  supported_parameters?: string[];
+}
+
+export async function fetchFreeModels(): Promise<FreeModel[]> {
+  const res = await fetch(`${API_BASE}/api/models`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch models');
+  return res.json();
 }
 
 export async function streamChat(
