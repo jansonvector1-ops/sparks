@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, ChevronLeft, Plus, Trash2, FolderOpen, Code, FileText, Gamepad2, Zap, Palette, BarChart3, HelpCircle } from 'lucide-react';
+import { X, ChevronLeft, Plus, Trash2, FolderOpen, Code, FileText, Gamepad2, Zap, Palette, BarChart3, HelpCircle, Sparkles } from 'lucide-react';
 import type { Project } from '../lib/projects';
+import { streamChat } from '../lib/api';
 
 type Tab = 'categories' | 'games' | 'creative' | 'projects' | 'prompts' | 'apps-websites' | 'documents' | 'productivity-tools' | 'quiz-survey';
 
@@ -34,6 +35,31 @@ const GAMES = [
     title: 'Memory',
     emoji: '🃏',
     html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#0f0f1a;display:flex;flex-direction:column;align-items:center;padding:14px;margin:0;font-family:sans-serif;color:#fff}.grid{display:grid;grid-template-columns:repeat(4,56px);gap:5px;margin:10px 0}.card{width:56px;height:56px;background:#1a1a2e;border:2px solid #2a2a4a;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.6em;transition:.2s}.card.flip{background:#252560;border-color:#6366f1}.card.match{background:#1a3a1a;border-color:#22c55e;pointer-events:none}#msg{font-size:12px}button{padding:5px 13px;background:#6366f1;border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:12px}</style></head><body><h3 style="margin:0 0 3px;font-size:14px">Memory Match</h3><div id="msg">Find all pairs!</div><div class="grid" id="g"></div><button onclick="init()">Reset</button><script>const EM=['🐱','🐶','🦊','🐸','🦁','🐯','🐻','🦄'];let cards,flipped,matched,lock;function init(){const e=[...EM,...EM].sort(()=>Math.random()-.5);cards=e.map((em,i)=>({id:i,em,fl:false,mt:false}));flipped=[];matched=0;lock=false;render();document.getElementById('msg').textContent='Find all pairs!'}function render(){document.getElementById('g').innerHTML=cards.map((c,i)=>'<div class="card'+(c.fl?' flip':'')+(c.mt?' match':'')+'" onclick="flip('+i+')">'+(c.fl||c.mt?c.em:'')+'</div>').join('')}function flip(i){if(lock||cards[i].fl||cards[i].mt)return;cards[i].fl=true;flipped.push(i);render();if(flipped.length===2){lock=true;setTimeout(()=>{const[a,b]=flipped;if(cards[a].em===cards[b].em){cards[a].mt=cards[b].mt=true;matched++;if(matched===8)document.getElementById('msg').textContent='You won! 🎉'}else{cards[a].fl=cards[b].fl=false}flipped=[];lock=false;render()},700)}}init();</script></body></html>`,
+  },
+  {
+    title: 'Flappy Bird',
+    emoji: '🐦',
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#0f0f1a;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#fff}canvas{border:2px solid #6366f1;display:block;background:linear-gradient(to bottom,#87CEEB,#E0F6FF)}#s{position:absolute;top:10px;font-size:20px;font-weight:bold}</style></head><body><div id="s">Score: 0</div><canvas id="c" width="320" height="480"></canvas><script>const c=document.getElementById('c'),ctx=c.getContext('2d');let p={x:50,y:240,w:30,h:30,v:0},pipes=[],g=0.4,s=0,gameOver=false;const pipeW=60,pipeGap=120;function draw(){ctx.clearRect(0,0,320,480);ctx.fillStyle='#FFD700';ctx.fillRect(p.x,p.y,p.w,p.h);ctx.fillStyle='#228B22';pipes.forEach(pipe=>{ctx.fillRect(pipe.x,0,pipeW,pipe.top);ctx.fillRect(pipe.x,pipe.top+pipeGap,pipeW,480-pipe.top-pipeGap)});if(gameOver){ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,320,480);ctx.fillStyle='#fff';ctx.font='30px bold';ctx.textAlign='center';ctx.fillText('Game Over!',160,200);ctx.font='20px';ctx.fillText('Score: '+s,160,240)}}function update(){if(gameOver)return;p.v+=g;p.y+=p.v;if(p.y+p.h>480||p.y<0)gameOver=true;pipes.forEach((pipe,i)=>{pipe.x-=5;if(pipe.x+pipeW<0)pipes.splice(i,1);if(p.x<pipe.x+pipeW&&p.x+p.w>pipe.x&&(p.y<pipe.top||p.y+p.h>pipe.top+pipeGap))gameOver=true;if(pipe.x===p.x)s++,document.getElementById('s').textContent='Score: '+s});if(pipes.length===0||pipes[pipes.length-1].x<200)pipes.push({x:320,top:Math.random()*250+50});draw()}function frame(){update();requestAnimationFrame(frame)}document.addEventListener('keydown',e=>{if(e.code==='Space'){p.v=-8;if(gameOver){gameOver=false;p={x:50,y:240,w:30,h:30,v:0};pipes=[];s=0}}});frame();</script></body></html>`,
+  },
+  {
+    title: '2048',
+    emoji: '🎰',
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#0f0f1a;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:sans-serif;color:#fff;padding:10px}.grid{display:grid;grid-template-columns:repeat(4,70px);gap:10px;margin:20px 0;background:#1a1a2e;padding:10px;border-radius:8px}.tile{width:70px;height:70px;display:flex;align-items:center;justify-content:center;background:#252545;border-radius:6px;font-size:32px;font-weight:bold}.tile[data-value="2"]{background:#e74c3c}.tile[data-value="4"]{background:#e67e22}.tile[data-value="8"]{background:#f39c12}.tile[data-value="16"]{background:#d4af37}.tile[data-value="32"]{background:#c792ea}.tile[data-value="2048"]{background:#6366f1}button{padding:8px 16px;background:#6366f1;border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:14px}</style></head><body><h2 style="margin:0">2048</h2><p id="s">Score: 0</p><div class="grid" id="g"></div><button onclick="init()">New Game</button><script>let tiles=[],s=0;function init(){tiles=Array(16).fill(0);s=0;addTile();addTile();render();document.getElementById('s').textContent='Score: 0'}function addTile(){let empty=[];for(let i=0;i<16;i++)if(tiles[i]===0)empty.push(i);if(empty.length>0){let idx=empty[Math.floor(Math.random()*empty.length)];tiles[idx]=Math.random()<0.1?4:2}}function move(dir){let moved=false;let newTiles=[...tiles];if(dir==='left'||dir==='right'){for(let i=0;i<4;i++){let row=newTiles.slice(i*4,i*4+4);if(dir==='right')row.reverse();row=row.filter(t=>t>0);for(let j=0;j<row.length-1;j++){if(row[j]===row[j+1]){row[j]*=2;s+=row[j];row.splice(j+1,1)}}while(row.length<4)row.push(0);if(dir==='right')row.reverse();for(let j=0;j<4;j++){let idx=i*4+j;if(newTiles[idx]!==row[j])moved=true;newTiles[idx]=row[j]}}}if(dir==='up'||dir==='down'){for(let i=0;i<4;i++){let col=[newTiles[i],newTiles[i+4],newTiles[i+8],newTiles[i+12]];if(dir==='down')col.reverse();col=col.filter(t=>t>0);for(let j=0;j<col.length-1;j++){if(col[j]===col[j+1]){col[j]*=2;s+=col[j];col.splice(j+1,1)}}while(col.length<4)col.push(0);if(dir==='down')col.reverse();for(let j=0;j<4;j++){let idx=i+j*4;if(newTiles[idx]!==col[j])moved=true;newTiles[idx]=col[j]}}}if(moved){tiles=newTiles;addTile();render();document.getElementById('s').textContent='Score: '+s}}function render(){let html='';for(let i=0;i<16;i++){html+='<div class="tile" data-value="'+(tiles[i]||'')+'">'+tiles[i]+'</div>'}document.getElementById('g').innerHTML=html}document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')move('left');if(e.key==='ArrowRight')move('right');if(e.key==='ArrowUp')move('up');if(e.key==='ArrowDown')move('down')});init();</script></body></html>`,
+  },
+  {
+    title: 'Wordle',
+    emoji: '📝',
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#0f0f1a;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;font-family:sans-serif;color:#fff}.grid{display:grid;grid-template-columns:repeat(5,40px);gap:6px;margin:20px 0}.tile{width:40px;height:40px;background:#1a1a2e;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-weight:bold;border-radius:4px}.tile.green{background:#22c55e;border-color:#22c55e}.tile.yellow{background:#f59e0b;border-color:#f59e0b}.tile.gray{background:#6b7280;border-color:#6b7280}input{width:200px;padding:10px;background:#1a1a2e;border:2px solid #333;color:#fff;border-radius:6px;font-size:16px;text-transform:uppercase}button{padding:8px 16px;background:#6366f1;border:none;color:#fff;border-radius:6px;cursor:pointer;margin-top:10px}</style></head><body><h2 style="margin:0 0 20px">Wordle</h2><div class="grid" id="g"></div><p id="msg" style="margin:10px 0;text-align:center;min-height:20px">Guess the word!</p><input id="inp" type="text" maxlength="5" placeholder="Type guess..."><button onclick="guess()">Guess</button><script>const words=['REACT','JAVASCRIPT','FUNCTION','PROMISE','CODING','COMPUTER','WEBSITE','LIBRARY','PYTHON','TYPESCRIPT'];let word=words[Math.floor(Math.random()*words.length)],guesses=[],gameOver=false;function guess(){let g=document.getElementById('inp').value.toUpperCase();if(g.length!==5)return;if(gameOver)return;document.getElementById('inp').value='';guesses.push(g);render();if(g===word){document.getElementById('msg').textContent='You won! 🎉';gameOver=true}else if(guesses.length===6){document.getElementById('msg').textContent='Game Over! Word: '+word;gameOver=true}else{document.getElementById('msg').textContent='Attempt '+(guesses.length)+'/6'}}function render(){let html='';for(let row=0;row<6;row++){for(let col=0;col<5;col++){let char=guesses[row]?guesses[row][col]:'';let cls='';if(guesses[row]){if(guesses[row][col]===word[col])cls='green';else if(word.includes(guesses[row][col]))cls='yellow';else cls='gray'}html+='<div class="tile '+cls+'">'+char+'</div>'}}document.getElementById('g').innerHTML=html}document.addEventListener('keydown',e=>{if(e.key==='Enter')guess()});render();</script></body></html>`,
+  },
+  {
+    title: 'Breakout',
+    emoji: '🧱',
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#0f0f1a;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;color:#fff}canvas{border:2px solid #6366f1;display:block;background:#000}#s{font-size:18px;margin:10px 0}</style></head><body><div id="s">Score: 0 | Move: Arrow Keys</div><canvas id="c" width="400" height="300"></canvas><script>const c=document.getElementById('c'),ctx=c.getContext('2d');let p={x:175,w:50,h:10,y:280},b={x:190,y:260,r:5,vx:2,vy:-3},bricks=[],s=0,gameOver=false;for(let i=0;i<6;i++)for(let j=0;j<8;j++)bricks.push({x:j*45+10,y:i*20+20,w:40,h:15});document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'&&p.x>0)p.x-=15;if(e.key==='ArrowRight'&&p.x<350)p.x+=15});function collideRect(bx,by,bw,bh){if(b.x+b.r>bx&&b.x-b.r<bx+bw&&b.y+b.r>by&&b.y-b.r<by+bh)return true}function update(){if(gameOver)return;b.x+=b.vx;b.y+=b.vy;if(b.x-b.r<0||b.x+b.r>400)b.vx*=-1;if(b.y-b.r<0)b.vy*=-1;if(collideRect(p.x,p.y,p.w,p.h))b.vy*=-1;for(let i=0;i<bricks.length;i++){if(collideRect(bricks[i].x,bricks[i].y,bricks[i].w,bricks[i].h)){b.vy*=-1;bricks.splice(i,1);s+=10;document.getElementById('s').textContent='Score: '+s;break}}if(b.y-b.r>300)gameOver=true}function draw(){ctx.fillStyle='#1a1a2e';ctx.fillRect(0,0,400,300);ctx.fillStyle='#6366f1';ctx.fillRect(p.x,p.y,p.w,p.h);ctx.fillStyle='#FFD700';ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#22c55e';bricks.forEach(b=>{ctx.fillRect(b.x,b.y,b.w,b.h)});if(gameOver){ctx.fillStyle='rgba(0,0,0,0.7)';ctx.fillRect(0,0,400,300);ctx.fillStyle='#fff';ctx.font='30px bold';ctx.textAlign='center';ctx.fillText('Game Over!',200,150);ctx.font='20px';ctx.fillText('Final Score: '+s,200,190)}}function frame(){update();draw();requestAnimationFrame(frame)}frame();</script></body></html>`,
+  },
+  {
+    title: 'Connect 4',
+    emoji: '🔴',
+    html: `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#0f0f1a;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;font-family:sans-serif;color:#fff}.board{display:grid;grid-template-columns:repeat(7,50px);gap:4px;margin:20px 0;background:#1a1a2e;padding:10px;border-radius:8px}.cell{width:50px;height:50px;background:#0a0a14;border-radius:50%;cursor:pointer;border:2px solid #333}#msg{font-size:16px;margin:10px 0}button{padding:8px 16px;background:#6366f1;border:none;color:#fff;border-radius:6px;cursor:pointer}</style></head><body><h2 style="margin:0 0 10px">Connect 4</h2><p id="msg">Red's turn</p><div class="board" id="b"></div><button onclick="init()">New Game</button><script>let board=Array(42).fill(0),turn=1;function render(){let html='';for(let i=0;i<42;i++){let col=idx%7>board[i]?'backgroundColor:#FFD700;cursor:pointer':board[i]===1?'backgroundColor:#FF0000':'backgroundColor:#FFD700';html+='<div class="cell" style="'+col+'" onclick="play('+i+')"></div>'}document.getElementById('b').innerHTML=html}function play(idx){let col=idx%7;let row=0;while(row<6&&board[col+row*7]!==0)row++;if(row===6)return;board[col+row*7]=turn;if(checkWin(col,row*7)){document.getElementById('msg').textContent=(turn===1?'Red':'Yellow')+' wins!'}else{turn=turn===1?2:1;document.getElementById('msg').textContent=(turn===1?'Red':'Yellow')+"'s turn"}render()}function checkWin(x,y){let dirs=[[1,0],[0,1],[1,1],[1,-1]];for(let[dx,dy] of dirs){let cnt=1;for(let i=1;i<4;i++){let nx=x+dx*i,ny=(y+dy*i);if(nx>=0&&nx<7&&ny>=0&&ny<42&&board[nx+ny]===turn)cnt++;else break}for(let i=1;i<4;i++){let nx=x-dx*i,ny=(y-dy*i);if(nx>=0&&nx<7&&ny>=0&&ny<42&&board[nx+ny]===turn)cnt++;else break}if(cnt>=4)return true}return false}function init(){board=Array(42).fill(0);turn=1;document.getElementById('msg').textContent="Red's turn";render()}init();</script></body></html>`,
   },
 ];
 
@@ -86,6 +112,9 @@ export function ArtifactPanel({
 }: ArtifactPanelProps) {
   const [tab, setTab] = useState<Tab>('categories');
   const [openItem, setOpenItem] = useState<{ title: string; html: string } | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const items = tab === 'games' ? GAMES : CREATIVE;
 
@@ -101,20 +130,83 @@ export function ArtifactPanel({
     if (categoryId === 'scratch') {
       onClose();
     } else if (['apps-websites', 'documents', 'productivity-tools', 'quiz-survey'].includes(categoryId)) {
-      const prompt = `Create a ${categoryId.replace('-', ' ')}: `;
-      onPromptSelect(prompt);
-      onClose();
+      setSelectedCategory(categoryId);
+      setSuggestions([]);
     } else {
       setTab(categoryId as Tab);
     }
   };
 
+  const fetchSuggestions = async (categoryId: string) => {
+    setLoadingSuggestions(true);
+    const categoryNames: Record<string, string> = {
+      'apps-websites': 'web applications and websites',
+      'documents': 'documents and templates',
+      'productivity-tools': 'productivity tools',
+      'quiz-survey': 'quizzes or surveys',
+    };
+    const categoryName = categoryNames[categoryId] || categoryId;
+
+    try {
+      const msgHistory = [
+        { role: 'system', content: 'You are a creative assistant. Generate 3 unique and specific project ideas for the user. Return ONLY a numbered list with no additional text. Example: 1. Idea one\n2. Idea two\n3. Idea three' },
+        { role: 'user', content: `Suggest 3 specific ideas for building ${categoryName}. Be concise and creative.` },
+      ];
+
+      const stream = await streamChat('claude-3-5-sonnet-20241022', msgHistory, {
+        temperature: 0.8,
+        topP: 1,
+        maxTokens: 300,
+      });
+
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content ?? '';
+            if (delta) fullResponse += delta;
+          } catch {
+            // ignore JSON parsing errors
+          }
+        }
+      }
+
+      // Parse suggestions from numbered list
+      const suggestionArray = fullResponse
+        .split('\n')
+        .filter(line => /^\d+\.|^-/.test(line.trim()))
+        .map(line => line.replace(/^\d+\.\s*|-\s*/, '').trim())
+        .filter(line => line.length > 0);
+
+      setSuggestions(suggestionArray.length > 0 ? suggestionArray : ['Unable to fetch suggestions']);
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+      setSuggestions(['Failed to fetch suggestions. Try again.']);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
   return (
-    <div
-      className="fixed inset-y-0 right-0 z-40 flex flex-col bg-surface border-l border-border shadow-2xl"
-      style={{ width: 'min(320px, 100vw)', animation: 'slideInRight 0.25s ease' }}
-    >
-      <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-3xl max-h-[90vh] rounded-2xl border border-border bg-surface shadow-2xl flex flex-col animate-fade-in overflow-hidden">
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
@@ -162,25 +254,71 @@ export function ArtifactPanel({
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             <div className="max-w-2xl">
-              <h2 className="text-center text-lg sm:text-xl font-semibold text-text-primary mb-6 sm:mb-8">
-                Let's get cooking! Pick an artifact category or start building your idea from scratch.
-              </h2>
+              {selectedCategory ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory(null);
+                      setSuggestions([]);
+                    }}
+                    className="flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary mb-4 transition-colors"
+                  >
+                    <ChevronLeft size={15} />
+                    Back to categories
+                  </button>
+                  <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-4">
+                    {ARTIFACT_CATEGORIES.find(c => c.id === selectedCategory)?.label}
+                  </h2>
 
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {ARTIFACT_CATEGORIES.map(category => {
-                  const Icon = category.icon;
-                  return (
+                  {suggestions.length > 0 ? (
+                    <div className="space-y-3">
+                      {suggestions.map((suggestion, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            onPromptSelect(`Create a ${suggestion}: `);
+                            onClose();
+                          }}
+                          className="w-full text-left px-4 py-3 rounded-lg border border-border bg-surface-2 hover:bg-surface-3 transition-colors"
+                        >
+                          <p className="text-sm text-text-primary">{suggestion}</p>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
                     <button
-                      key={category.id}
-                      onClick={() => handleCategoryClick(category.id)}
-                      className={`flex flex-col items-center justify-center gap-3 p-4 sm:p-6 rounded-xl border border-border hover:border-accent/50 transition-all hover:bg-surface-2 ${category.color}`}
+                      onClick={() => fetchSuggestions(selectedCategory)}
+                      disabled={loadingSuggestions}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-white hover:bg-accent/90 disabled:opacity-50 transition-colors"
                     >
-                      <Icon size={28} className="sm:w-8 sm:h-8" />
-                      <span className="text-sm sm:text-base font-medium text-text-primary text-center">{category.label}</span>
+                      <Sparkles size={16} />
+                      {loadingSuggestions ? 'Getting suggestions...' : 'Get AI Suggestions'}
                     </button>
-                  );
-                })}
-              </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h2 className="text-center text-lg sm:text-xl font-semibold text-text-primary mb-6 sm:mb-8">
+                    Let's get cooking! Pick an artifact category or start building your idea from scratch.
+                  </h2>
+
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    {ARTIFACT_CATEGORIES.map(category => {
+                      const Icon = category.icon;
+                      return (
+                        <button
+                          key={category.id}
+                          onClick={() => handleCategoryClick(category.id)}
+                          className={`flex flex-col items-center justify-center gap-3 p-4 sm:p-6 rounded-xl border border-border hover:border-accent/50 transition-all hover:bg-surface-2 ${category.color}`}
+                        >
+                          <Icon size={28} className="sm:w-8 sm:h-8" />
+                          <span className="text-sm sm:text-base font-medium text-text-primary text-center">{category.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -303,6 +441,7 @@ export function ArtifactPanel({
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
