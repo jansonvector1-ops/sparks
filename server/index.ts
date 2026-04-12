@@ -318,7 +318,7 @@ app.post("/api/chat", async (req, res) => {
       headers: {
         "Authorization": `Bearer ${openRouterApiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://sparks-ai-chat.onrender.com",
+"HTTP-Referer": process.env.FRONTEND_URL || "https://sparks-production-780a.up.railway.app",
         "X-Title": "Sparks AI Chat",
       },
       body: JSON.stringify({
