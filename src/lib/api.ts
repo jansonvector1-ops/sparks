@@ -105,12 +105,6 @@ export interface FreeModel {
   supported_parameters?: string[]; // ← இது add ஆச்சு
 }
 
-export async function fetchFreeModels(): Promise<FreeModel[]> {
-  const res = await fetch(`${API_BASE}/api/models`);
-  if (!res.ok) throw new Error('Failed to fetch models');
-  return res.json();
-}
-
 export async function streamChat(
   model: string,
   chatMessages: { role: string; content: string }[],
