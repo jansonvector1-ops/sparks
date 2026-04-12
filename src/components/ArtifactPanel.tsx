@@ -1,8 +1,18 @@
 import { useState } from 'react';
-import { X, ChevronLeft, Plus, Trash2, FolderOpen } from 'lucide-react';
+import { X, ChevronLeft, Plus, Trash2, FolderOpen, Code, FileText, Gamepad2, Zap, Palette, BarChart3, HelpCircle } from 'lucide-react';
 import type { Project } from '../lib/projects';
 
-type Tab = 'games' | 'creative' | 'projects' | 'prompts';
+type Tab = 'categories' | 'games' | 'creative' | 'projects' | 'prompts' | 'apps-websites' | 'documents' | 'productivity-tools' | 'quiz-survey';
+
+const ARTIFACT_CATEGORIES = [
+  { id: 'apps-websites', label: 'Apps and websites', icon: Code, color: 'bg-blue-500/10 text-blue-400' },
+  { id: 'documents', label: 'Documents and templates', icon: FileText, color: 'bg-purple-500/10 text-purple-400' },
+  { id: 'games', label: 'Games', icon: Gamepad2, color: 'bg-pink-500/10 text-pink-400' },
+  { id: 'productivity-tools', label: 'Productivity tools', icon: Zap, color: 'bg-yellow-500/10 text-yellow-400' },
+  { id: 'creative', label: 'Creative projects', icon: Palette, color: 'bg-green-500/10 text-green-400' },
+  { id: 'quiz-survey', label: 'Quiz or survey', icon: BarChart3, color: 'bg-indigo-500/10 text-indigo-400' },
+  { id: 'scratch', label: 'Start from scratch', icon: HelpCircle, color: 'bg-slate-500/10 text-slate-400' },
+];
 
 const GAMES = [
   {
@@ -74,17 +84,30 @@ interface ArtifactPanelProps {
 export function ArtifactPanel({
   onClose, projects, activeProjectId, onLoadProject, onCreateProject, onDeleteProject, onPromptSelect,
 }: ArtifactPanelProps) {
-  const [tab, setTab] = useState<Tab>('games');
+  const [tab, setTab] = useState<Tab>('categories');
   const [openItem, setOpenItem] = useState<{ title: string; html: string } | null>(null);
 
   const items = tab === 'games' ? GAMES : CREATIVE;
 
   const TABS: { id: Tab; label: string }[] = [
+    { id: 'categories', label: '⚡ Artifacts' },
     { id: 'games', label: '🎮 Games' },
     { id: 'creative', label: '🎨 Creative' },
     { id: 'prompts', label: '💬 Prompts' },
     { id: 'projects', label: '📁 Projects' },
   ];
+
+  const handleCategoryClick = (categoryId: string) => {
+    if (categoryId === 'scratch') {
+      onClose();
+    } else if (['apps-websites', 'documents', 'productivity-tools', 'quiz-survey'].includes(categoryId)) {
+      const prompt = `Create a ${categoryId.replace('-', ' ')}: `;
+      onPromptSelect(prompt);
+      onClose();
+    } else {
+      setTab(categoryId as Tab);
+    }
+  };
 
   return (
     <div
@@ -98,6 +121,14 @@ export function ArtifactPanel({
         {openItem ? (
           <button
             onClick={() => setOpenItem(null)}
+            className="flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <ChevronLeft size={15} />
+            Back
+          </button>
+        ) : tab !== 'categories' ? (
+          <button
+            onClick={() => setTab('categories')}
             className="flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
             <ChevronLeft size={15} />
@@ -127,24 +158,67 @@ export function ArtifactPanel({
             title={openItem.title}
           />
         </div>
+      ) : tab === 'categories' ? (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div className="max-w-2xl">
+              <h2 className="text-center text-lg sm:text-xl font-semibold text-text-primary mb-6 sm:mb-8">
+                Let's get cooking! Pick an artifact category or start building your idea from scratch.
+              </h2>
+
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {ARTIFACT_CATEGORIES.map(category => {
+                  const Icon = category.icon;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryClick(category.id)}
+                      className={`flex flex-col items-center justify-center gap-3 p-4 sm:p-6 rounded-xl border border-border hover:border-accent/50 transition-all hover:bg-surface-2 ${category.color}`}
+                    >
+                      <Icon size={28} className="sm:w-8 sm:h-8" />
+                      <span className="text-sm sm:text-base font-medium text-text-primary text-center">{category.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
         <>
-          {/* Tabs */}
-          <div className="flex border-b border-border flex-shrink-0 overflow-x-auto">
-            {TABS.map(t => (
+          {/* Tabs - only show when not in categories view */}
+          {tab !== 'categories' && (
+            <div className="flex border-b border-border flex-shrink-0 overflow-x-auto">
               <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
+                onClick={() => setTab('categories')}
                 className={`px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
-                  tab === t.id
+                  tab === 'categories'
                     ? 'border-accent text-accent'
                     : 'border-transparent text-text-muted hover:text-text-secondary'
                 }`}
               >
-                {t.label}
+                ⚡ Home
               </button>
-            ))}
-          </div>
+              {[
+                { id: 'games' as const, label: '🎮 Games' },
+                { id: 'creative' as const, label: '🎨 Creative' },
+                { id: 'prompts' as const, label: '💬 Prompts' },
+                { id: 'projects' as const, label: '📁 Projects' },
+              ].map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
+                    tab === t.id
+                      ? 'border-accent text-accent'
+                      : 'border-transparent text-text-muted hover:text-text-secondary'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-3">
