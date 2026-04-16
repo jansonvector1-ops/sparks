@@ -62,6 +62,7 @@ function AppContent() {
 
   // Chat input
   const [chatInputValue, setChatInputValue] = useState('');
+  const [chatError, setChatError] = useState<string | null>(null);
 
   // Projects
   const [projects, setProjects] = useState<Project[]>(() => loadProjects());
@@ -250,6 +251,13 @@ function AppContent() {
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
 
+    // Auth check — token expire ஆனா re-login சொல்லு
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      setChatError('Session expired. Please login again.');
+      return;
+    }
+
     let conversationId = currentConversation;
     if (!conversationId) {
       try {
@@ -258,18 +266,25 @@ function AppContent() {
         setCurrentConversation(conversationId);
         await loadConversations();
       } catch (error: unknown) {
-        console.warn('Failed to create conversation', error);
+        const msg = error instanceof Error ? error.message : 'Failed to create conversation';
+        if (msg.includes('401') || msg.toLowerCase().includes('auth') || msg.toLowerCase().includes('unauthorized')) {
+          setChatError('Session expired. Please logout and login again.');
+        } else {
+          setChatError('Failed to start conversation. Check your connection.');
+        }
         return;
       }
     }
 
+    setChatError(null);
     const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content };
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
     try {
       await createMessage(conversationId!, 'user', content, userMsg.id);
     } catch (error: unknown) {
-      console.warn('Failed to persist user message', error);
+      // DB save fail ஆனாலும் AI chat continue பண்ணு — history மட்டும் போகும்
+      console.warn('Failed to persist user message to DB:', error);
     }
 
     const assistantId = crypto.randomUUID();
@@ -584,6 +599,12 @@ function AppContent() {
                 <h1 className="font-mono font-bold text-2xl sm:text-3xl tracking-tight text-text-primary mb-2">AI Chat</h1>
                 <p className="text-xs sm:text-sm text-text-muted">Type a message to get started</p>
               </div>
+              {chatError && (
+                <div className="mb-3 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center justify-between">
+                  <span>⚠️ {chatError}</span>
+                  <button onClick={() => setChatError(null)} className="ml-2 hover:text-red-300">✕</button>
+                </div>
+              )}
               <ChatInput
                 onSendMessage={handleSendMessage}
                 disabled={isLoading}

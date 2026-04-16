@@ -78,6 +78,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeAuth();
+
+    // Supabase token auto-refresh — session renew ஆகும்போது localStorage update பண்ணு
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED' && session?.access_token) {
+        localStorage.setItem('auth_token', session.access_token);
+      }
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('auth_token');
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signup = async (email: string, password: string, fullName: string) => {
