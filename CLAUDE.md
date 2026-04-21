@@ -3,8 +3,7 @@
 ## 🧠 Project Overview
 Sparks is a sleek AI chat web application built with React + TypeScript.
 It uses **OpenRouter free tier** to access 28+ AI models — no paid API needed.
-Live URL: https://sparks-gamma.vercel.app
-
+Live URL: 
 ---
 
 ## 🛠️ Tech Stack
