@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 
 interface User {
   id: string;
@@ -28,19 +28,36 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // If Supabase is not configured, skip auth
+  if (!supabase) {
+    setLoading(false);
+    return (
+      <AuthContext.Provider value={{
+        user: null,
+        loading: false,
+        error: null,
+        signup: async () => { throw new Error('Authentication not configured'); },
+        login: async () => { throw new Error('Authentication not configured'); },
+        logout: async () => {},
+        resetPassword: async () => { throw new Error('Authentication not configured'); },
+        verifyEmail: async () => { throw new Error('Authentication not configured'); },
+        updateProfile: async () => { throw new Error('Authentication not configured'); },
+        deleteAccount: async () => { throw new Error('Authentication not configured'); },
+        changePassword: async () => { throw new Error('Authentication not configured'); },
+        isAdmin: () => false,
+        clearError: () => {},
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
+
+  // Supabase is configured, proceed with auth
 
   // Initialize auth on app load
   useEffect(() => {
