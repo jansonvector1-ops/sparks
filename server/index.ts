@@ -155,21 +155,20 @@ app.post("/api/chat", async (req, res) => {
 });
 
 // --- Protected API Routes (auth required) ---
-app.use("/api", authMiddleware);
 
 // --- User Profile Endpoints ---
-app.get("/api/user/profile", getUserProfile);
-app.patch("/api/user/profile", updateUserProfile);
-app.delete("/api/user/account", deleteUserAccount);
-app.post("/api/user/change-password", changePassword);
+app.get("/api/user/profile", authMiddleware, getUserProfile);
+app.patch("/api/user/profile", authMiddleware, updateUserProfile);
+app.delete("/api/user/account", authMiddleware, deleteUserAccount);
+app.post("/api/user/change-password", authMiddleware, changePassword);
 
 // --- Admin Endpoints ---
-app.get("/api/admin/users", requireAdmin, getAllUsers);
-app.delete("/api/admin/users/:id", requireAdmin, deleteUserAsAdmin);
-app.get("/api/admin/logs", requireAdmin, getAdminLogs);
+app.get("/api/admin/users", authMiddleware, requireAdmin, getAllUsers);
+app.delete("/api/admin/users/:id", authMiddleware, requireAdmin, deleteUserAsAdmin);
+app.get("/api/admin/logs", authMiddleware, requireAdmin, getAdminLogs);
 
 // --- Conversations ---
-app.get("/api/conversations", async (req, res) => {
+app.get("/api/conversations", authMiddleware, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
@@ -186,7 +185,7 @@ app.get("/api/conversations", async (req, res) => {
   }
 });
 
-app.post("/api/conversations", async (req, res) => {
+app.post("/api/conversations", authMiddleware, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
@@ -202,7 +201,7 @@ app.post("/api/conversations", async (req, res) => {
   }
 });
 
-app.patch("/api/conversations/:id", async (req, res) => {
+app.patch("/api/conversations/:id", authMiddleware, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
@@ -231,7 +230,7 @@ app.patch("/api/conversations/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/conversations/:id", async (req, res) => {
+app.delete("/api/conversations/:id", authMiddleware, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
@@ -256,7 +255,7 @@ app.delete("/api/conversations/:id", async (req, res) => {
 });
 
 // --- Messages ---
-app.get("/api/conversations/:id/messages", async (req, res) => {
+app.get("/api/conversations/:id/messages", authMiddleware, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
@@ -284,7 +283,7 @@ app.get("/api/conversations/:id/messages", async (req, res) => {
   }
 });
 
-app.post("/api/conversations/:id/messages", async (req, res) => {
+app.post("/api/conversations/:id/messages", authMiddleware, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
@@ -318,7 +317,7 @@ app.post("/api/conversations/:id/messages", async (req, res) => {
   }
 });
 
-app.delete("/api/messages/:id", async (req, res) => {
+app.delete("/api/messages/:id", authMiddleware, async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Not authenticated' });
