@@ -38,11 +38,24 @@ export interface SamplingSettings {
   systemPrompt: string;
 }
 
+async function parseApiError(res: Response): Promise<never> {
+  let message = `Request failed with status ${res.status}`;
+  try {
+    const data = await res.json();
+    if (data?.error) message = data.error;
+    else if (typeof data === 'string') message = data;
+  } catch {
+    const text = await res.text().catch(() => 'Unable to read error response');
+    if (text) message = text;
+  }
+  throw new Error(message);
+}
+
 export async function fetchConversations(): Promise<Conversation[]> {
   const res = await fetch(`${API_BASE}/api/conversations`, {
     headers: getAuthHeaders(false),
   });
-  if (!res.ok) throw new Error('Failed to fetch conversations');
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 
@@ -52,7 +65,7 @@ export async function createConversation(title: string, model: string): Promise<
     headers: getAuthHeaders(),
     body: JSON.stringify({ title, model }),
   });
-  if (!res.ok) throw new Error('Failed to create conversation');
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 

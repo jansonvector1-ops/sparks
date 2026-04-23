@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const token = localStorage.getItem('auth_token');
         if (token) {
           const response = await fetch(`${API_BASE}/api/auth/verify`, {
+            method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
           });
 
