@@ -1,4 +1,9 @@
-export const API_BASE = import.meta.env.VITE_API_URL?.trim().replace(/\/$/, '') || '';
+const rawApiBase = import.meta.env.VITE_API_URL?.trim() || '';
+export const API_BASE = rawApiBase
+  ? rawApiBase.replace(/\/$/, '').startsWith('http')
+    ? rawApiBase.replace(/\/$/, '')
+    : `https://${rawApiBase.replace(/\/$/, '')}`
+  : 'https://sparks-production-c868.up.railway.app';
 
 function getAuthHeaders(includeContentType = true): Record<string, string> {
   const token = localStorage.getItem('auth_token');
