@@ -23,25 +23,25 @@ import {
 const app = express();
 app.use(express.json());
 app.use((_req, res, next) => {
-  const origin = _req.headers.origin;
+  const origin = _req.headers.origin as string | undefined;
   const allowedOrigins = [
     'https://sparks-defmodel-jansonvector1-ops-projects.vercel.app',
     'https://sparks-roan.vercel.app',
     'http://localhost:5173',
     'http://localhost:3000'
   ];
-  
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  } else {
-    res.header('Access-Control-Allow-Origin', '*');
-  }
-  
+  const allowOrigin = origin && allowedOrigins.includes(origin) ? origin : '*';
+
+  res.header('Access-Control-Allow-Origin', allowOrigin);
+  res.header('Vary', 'Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+
   if (_req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
+
   next();
 });
 
@@ -60,10 +60,15 @@ app.get("/api/models", async (_req, res) => {
       return;
     }
     const response = await fetch("https://openrouter.ai/api/v1/models", {
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: 'application/json',
+      },
     });
     if (!response.ok) {
-      res.status(response.status).json({ error: "Failed to fetch models from OpenRouter" });
+      const body = await response.text().catch(() => 'Unable to read OpenRouter response');
+      console.error('OpenRouter /models failed', response.status, body);
+      res.status(response.status).json({ error: "Failed to fetch models from OpenRouter", details: body });
       return;
     }
 

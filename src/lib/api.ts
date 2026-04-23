@@ -1,8 +1,12 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'https://sparks-production-780a.up.railway.app';
+const rawApiBase = import.meta.env.VITE_API_URL;
+const API_BASE = rawApiBase?.trim().replace(/\/$/, '') || '';
 
-function getAuthHeaders(): Record<string, string> {
+function getAuthHeaders(includeContentType = true): Record<string, string> {
   const token = localStorage.getItem('auth_token');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = {};
+  if (includeContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
@@ -32,7 +36,7 @@ export interface SamplingSettings {
 
 export async function fetchConversations(): Promise<Conversation[]> {
   const res = await fetch(`${API_BASE}/api/conversations`, {
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders(false),
   });
   if (!res.ok) throw new Error('Failed to fetch conversations');
   return res.json();
@@ -68,7 +72,7 @@ export async function deleteConversation(id: string): Promise<void> {
 
 export async function fetchMessages(conversationId: string): Promise<Message[]> {
   const res = await fetch(`${API_BASE}/api/conversations/${conversationId}/messages`, {
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders(false),
   });
   if (!res.ok) throw new Error('Failed to fetch messages');
   return res.json();
@@ -107,7 +111,7 @@ export interface FreeModel {
 
 export async function fetchFreeModels(): Promise<FreeModel[]> {
   const res = await fetch(`${API_BASE}/api/models`, {
-    headers: getAuthHeaders(),
+    headers: getAuthHeaders(false),
   });
   if (!res.ok) throw new Error('Failed to fetch models');
   return res.json();
