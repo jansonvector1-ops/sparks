@@ -55,7 +55,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch(`${API_BASE}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -75,7 +75,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/admin/logs', {
+      const response = await fetch(`${API_BASE}/api/admin/logs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -99,7 +99,7 @@ export function AdminPanel({ onBack }: AdminPanelProps) {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

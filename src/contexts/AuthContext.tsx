@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE } from '../lib/api';
 import { supabase } from '../lib/supabase';
 
 interface User {
@@ -65,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const token = localStorage.getItem('auth_token');
         if (token) {
-          const response = await fetch('/api/auth/verify', {
+          const response = await fetch(`${API_BASE}/api/auth/verify`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(data.user);
 
             // Fetch full profile
-            const profileResponse = await fetch('/api/user/profile', {
+            const profileResponse = await fetch(`${API_BASE}/api/user/profile`, {
               headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -159,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('auth_token', sessionData.session.access_token);
 
         // Fetch user profile from backend
-        const response = await fetch('/api/user/profile', {
+        const response = await fetch(`${API_BASE}/api/user/profile`, {
           headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
         });
 
@@ -190,7 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       const token = localStorage.getItem('auth_token');
       if (token) {
-        await fetch('/api/auth/logout', {
+        await fetch(`${API_BASE}/api/auth/logout`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -238,7 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem('auth_token');
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch('/api/user/profile', {
+const response = await fetch(`${API_BASE}/api/user/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -267,7 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem('auth_token');
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch('/api/user/change-password', {
+      const response = await fetch(`${API_BASE}/api/user/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -293,7 +294,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const token = localStorage.getItem('auth_token');
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch('/api/user/account', {
+      const response = await fetch(`${API_BASE}/api/user/account`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
